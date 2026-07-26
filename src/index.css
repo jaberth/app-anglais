@@ -1,0 +1,44 @@
+@import 'tailwindcss';
+
+/* Palette et rythme typographique de l'app. Tailwind v4 lit ce bloc @theme
+   pour generer les utilitaires (bg-brand-600, text-ink-500, etc.). */
+@theme {
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+
+  --color-ink-400: #94a3b8;
+  --color-ink-500: #64748b;
+  --color-ink-700: #334155;
+  --color-ink-900: #0f172a;
+
+  --color-surface: #f8fafc;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+@layer base {
+  html {
+    /* Evite le zoom involontaire sur double-tap en usage mobile quotidien. */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface text-ink-900 font-sans antialiased;
+    /* L'app est un outil de session courte : on ne veut pas de rebond elastique
+       qui donne l'impression que le contenu deborde. */
+    overscroll-behavior-y: none;
+  }
+
+  /* Zone de saisie : sur iOS une police < 16px declenche un zoom automatique
+     a chaque focus, tres genant dans un module de chat. */
+  input,
+  textarea,
+  select {
+    font-size: max(1rem, 16px);
+  }
+}

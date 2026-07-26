@@ -1,0 +1,158 @@
+// Point d'entree unique du Worker Cloudflare (Workers + Static Assets).
+//
+// Deux responsabilites :
+//  1. /api/* : proxy securise vers l'API Gemini. La cle vit dans le Secrets
+//     Store Cloudflare et n'est JAMAIS exposee au navigateur.
+//  2. tout le reste : les fichiers statiques du build Vite (dist/), servis via
+//     le binding ASSETS.
+
+import { buildDialogueRequest, parseDialogueResponse } from './prompts/dialogue.js'
+import {
+  buildPlacementTestRequest,
+  parsePlacementTestResponse,
+  buildPlacementEvaluationRequest,
+  parsePlacementEvaluationResponse,
+} from './prompts/placementTest.js'
+
+const GEMINI_MODEL = 'gemini-2.5-flash'
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
+
+// Meme origine uniquement : le front est servi par ce meme Worker, donc aucune
+// raison d'ouvrir CORS a des tiers (et donc au pillage du quota Gemini).
+const JSON_HEADERS = { 'content-type': 'application/json' }
+
+// Table de routage : chaque route decrit comment fabriquer la requete Gemini
+// et comment interpreter sa reponse. Ajouter une capacite = ajouter une entree.
+const ROUTES = {
+  '/api/placement-test': {
+    build: buildPlacementTestRequest,
+    parse: parsePlacementTestResponse,
+  },
+  '/api/placement-test/evaluate': {
+    build: buildPlacementEvaluationRequest,
+    parse: parsePlacementEvaluationResponse,
+  },
+  '/api/dialogue': {
+    build: buildDialogueRequest,
+    parse: parseDialogueResponse,
+  },
+}
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url)
+
+    if (url.pathname.startsWith('/api/')) {
+      const route = ROUTES[url.pathname]
+      if (!route) return jsonError('Route inconnue', 404)
+      return handleAiRoute(request, env, route)
+    }
+
+    const assetResponse = await env.ASSETS.fetch(request)
+    // Defense en profondeur : meme si Cloudflare Access etait un jour desactive
+    // par erreur, on demande explicitement aux robots de ne pas indexer l'app.
+    const response = new Response(assetResponse.body, assetResponse)
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+    return response
+  },
+}
+
+async function handleAiRoute(request, env, route) {
+  if (request.method !== 'POST') {
+    return jsonError('Methode non autorisee', 405)
+  }
+
+  let body
+  try {
+    body = await request.json()
+  } catch {
+    return jsonError('Corps de requete JSON invalide', 400)
+  }
+
+  let geminiRequest
+  try {
+    geminiRequest = route.build(body)
+  } catch (error) {
+    // Les fonctions build() valident leur entree et levent sur donnee invalide.
+    return jsonError(error.message || 'Parametres invalides', 400)
+  }
+
+  const text = await callGemini(env, geminiRequest)
+  if (!text.ok) return jsonError(text.error, text.status)
+
+  let payload
+  try {
+    payload = route.parse(text.value)
+  } catch {
+    // Le modele n'a pas respecte le format demande : on ne renvoie pas sa sortie
+    // brute au client, elle n'est pas exploitable par l'UI.
+    return jsonError('Reponse du modele inexploitable', 502)
+  }
+
+  return new Response(JSON.stringify(payload), { status: 200, headers: JSON_HEADERS })
+}
+
+/**
+ * Appelle Gemini et retourne le texte concatene des parts.
+ * Retourne { ok: true, value } ou { ok: false, error, status }.
+ */
+async function callGemini(env, { systemPrompt, contents, generationConfig }) {
+  let response
+  try {
+    // Le binding Secrets Store expose un objet, pas la valeur directement :
+    // il faut l'appel asynchrone .get() pour recuperer la cle reelle.
+    const apiKey = await env.GEMINI_API_KEY.get()
+
+    response = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents,
+        generationConfig: {
+          // Le coach doit produire du JSON strict : on evite la creativite
+          // sur la structure, pas sur le contenu pedagogique.
+          responseMimeType: 'application/json',
+          ...generationConfig,
+        },
+      }),
+    })
+  } catch {
+    // Ne jamais faire fuiter la cle ou le detail reseau dans le message.
+    return { ok: false, error: "Erreur reseau lors de l'appel a l'API Gemini", status: 502 }
+  }
+
+  // Jamais .json() direct : on lit le texte brut d'abord, en try/catch.
+  const rawBody = await response.text()
+
+  if (!response.ok) {
+    // 429 = quota atteint : on le transmet tel quel pour que l'UI affiche un
+    // message specifique plutot qu'une erreur generique.
+    return {
+      ok: false,
+      error: response.status === 429 ? 'Quota Gemini atteint' : 'Erreur API Gemini',
+      status: response.status === 429 ? 429 : 502,
+    }
+  }
+
+  let parsed
+  try {
+    parsed = JSON.parse(rawBody)
+  } catch {
+    return { ok: false, error: 'Reponse Gemini illisible', status: 502 }
+  }
+
+  const parts = parsed.candidates?.[0]?.content?.parts || []
+  const value = parts
+    .map((part) => part.text || '')
+    .join('')
+    .trim()
+
+  if (!value) return { ok: false, error: 'Reponse Gemini vide', status: 502 }
+
+  return { ok: true, value }
+}
+
+function jsonError(message, status) {
+  return new Response(JSON.stringify({ error: message }), { status, headers: JSON_HEADERS })
+}

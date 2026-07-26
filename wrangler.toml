@@ -1,0 +1,27 @@
+name = "coach-anglais"
+compatibility_date = "2026-07-20"
+main = "./worker/index.js"
+
+# Le Worker sert le build Vite. run_worker_first garantit que /api/* est traite
+# par le code avant toute tentative de resolution en fichier statique.
+[assets]
+directory = "./dist/"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+# La cle Gemini vit dans le Secrets Store Cloudflare, jamais dans le repo ni
+# dans le bundle client.
+# A creer avant le premier deploiement :
+#   npx wrangler secrets-store store create coach-anglais
+#   npx wrangler secrets-store secret create <STORE_ID> --name GEMINI_API_KEY --scopes workers
+# puis renseigner store_id ci-dessous.
+# [[secrets_store_secrets]]
+# binding = "GEMINI_API_KEY"
+# store_id = "<A_RENSEIGNER>"
+# secret_name = "GEMINI_API_KEY"
+
+# Migration V2 : quand LocalStorage ne suffira plus (multi-appareils), creer un
+# namespace KV et brancher le backend de src/lib/storage/progressStore.js dessus.
+# [[kv_namespaces]]
+# binding = "COACH_DATA"
+# id = "<A_RENSEIGNER>"
