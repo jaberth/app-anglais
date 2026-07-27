@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { continueDialogue } from '../../lib/api/coachClient.js'
 import { getGrammarTopic, isKnownTag } from '../../../shared/grammarTopics.js'
-import { VOCABULARY } from '../../data/vocabulary.js'
+import { VOCABULARY, vocabularyForDialogue } from '../../../shared/vocabulary.js'
 
 const MAX_EXAMPLES_PAR_TAG = 3
 
@@ -49,6 +49,10 @@ export function useDialogue({ scenario, progress, updateProgress }) {
             level: progress.profile.level ?? 'B1',
             history,
             userMessage: text,
+            // Le front decide quels termes meritent d'etre remis en circulation
+            // (il connait la progression) ; le Worker se contente de les mettre
+            // en forme dans le prompt.
+            vocabularyIds: vocabularyForDialogue({ seen: progress.vocabulary.seen }),
           },
           { signal: controller.signal },
         )
@@ -85,7 +89,7 @@ export function useDialogue({ scenario, progress, updateProgress }) {
         if (aliveRef.current) setPending(false)
       }
     },
-    [progress.profile.level, scenario.id],
+    [progress.profile.level, progress.vocabulary.seen, scenario.id],
   )
 
   const send = useCallback(

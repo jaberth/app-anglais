@@ -4,6 +4,11 @@
 //
 // Amorce volontairement courte : elle sert a valider le format et l'ecran.
 // Le contenu complet se remplit au fil des sessions.
+//
+// Vit dans shared/ et non dans src/data/ parce que le Worker en a besoin : le
+// prompt de dialogue reinjecte ces termes pour que le coach les remploie en
+// situation. C'est ce qui fait la difference entre apprendre un terme sur une
+// carte et le rencontrer dans une phrase de reunion.
 
 export const VOCAB_DOMAINS = [
   {
@@ -124,4 +129,47 @@ export const VOCABULARY = [
 
 export function getVocabularyByDomain(domainId) {
   return VOCABULARY.filter((entry) => entry.domain === domainId)
+}
+
+export function getVocabularyEntry(id) {
+  return VOCABULARY.find((entry) => entry.id === id) || null
+}
+
+/**
+ * Sequence de revision, courte par construction : une session dure 10-15 min et
+ * le vocabulaire n'en est qu'une partie.
+ *
+ * Priorite : ce qui a ete vu mais pas acquis d'abord (c'est la que le rappel
+ * paie), puis ce qui n'a jamais ete vu, et seulement ensuite ce qui est deja
+ * acquis — pour l'entretenir sans y passer la session.
+ */
+export function buildReviewSequence({ seen = {}, size = 8 } = {}) {
+  const rang = (entry) => {
+    const suivi = seen[entry.id]
+    if (!suivi) return 1 // jamais vu
+    if (!suivi.mastered) return 0 // vu, pas acquis : prioritaire
+    return 2 // acquis : entretien
+  }
+
+  return [...VOCABULARY]
+    .map((entry, index) => ({ entry, index }))
+    .sort((a, b) => {
+      const ecart = rang(a.entry) - rang(b.entry)
+      // A rang egal, on garde l'ordre du catalogue plutot qu'un aleatoire : la
+      // sequence reste reproductible, donc debuggable.
+      return ecart !== 0 ? ecart : a.index - b.index
+    })
+    .slice(0, size)
+    .map(({ entry }) => entry.id)
+}
+
+/**
+ * Termes a remettre en circulation dans un dialogue.
+ *
+ * Meme priorite que la revision, mais l'objectif differe : il ne s'agit pas de
+ * faire reciter, seulement de donner au coach de quoi les employer naturellement
+ * dans sa replique.
+ */
+export function vocabularyForDialogue({ seen = {}, limit = 10 } = {}) {
+  return buildReviewSequence({ seen, size: limit })
 }

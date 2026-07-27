@@ -45,12 +45,13 @@ src/
     placement-test/     Test de placement : intro, passage, restitution
     dialogue/           Dialogues scénarisés : conversation + feedback correctif
     grammar/            File de révision priorisée par les lacunes
-    vocabulary/         Banque de vocabulaire métier
-  data/                 Contenus statiques (grammaire, vocabulaire)
+    vocabulary/         Révision par cartes + banque de vocabulaire métier
   lib/
     api/                Client HTTP vers le Worker
     storage/            Schéma, store et hook de progression
-shared/                 Constantes partagées front + Worker (scénarios)
+shared/                 Lu par le front ET le Worker : scénarios, grammaire,
+                        vocabulaire — source unique des données qui alimentent
+                        à la fois les écrans et les prompts
 worker/
   index.js              Routage /api/* + appel Gemini
   prompts/              Construction et parsing des prompts, par capacité
@@ -159,7 +160,6 @@ Les écrans marqués `ComingSoon` dans l'UI portent chacun un bloc `TODO(V1)` en
 tête de fichier détaillant le travail restant :
 
 - `features/grammar/` — séries d'exercices (nécessite une route `/api/grammar`)
-- `features/vocabulary/` — mode révision par cartes
 
 ## Hors périmètre V1
 

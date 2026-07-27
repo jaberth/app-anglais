@@ -91,10 +91,13 @@ tous les deux, et les dupliquer ferait diverger le prompt de l'écran.
 - `shared/scenarios.js` — les 3 scénarios de dialogue (libellés d'écran côté
   front, construction du prompt côté Worker) ;
 - `shared/grammarTopics.js` — le catalogue de grammaire, la file de révision, et
-  la liste fermée de tags injectée dans les prompts.
+  la liste fermée de tags injectée dans les prompts ;
+- `shared/vocabulary.js` — la banque de termes métier, la séquence de révision,
+  et les termes réinjectés dans le prompt de dialogue.
 
-Ne pas dupliquer ces données dans `src/data/`, qui ne garde que ce dont le
-Worker n'a aucun usage (`vocabulary.js`).
+`src/data/` n'existe plus : tout contenu statique finit par intéresser le
+Worker, puisque c'est lui qui construit les prompts. Créer un nouveau catalogue
+directement dans `shared/`.
 
 ### Navigation
 
@@ -123,15 +126,26 @@ réponses légitimes du modèle mais ne correspondent à aucun exercice : les
 compter créerait un compteur mort affiché sous un bouton « travailler ces
 points » qui ne mènerait nulle part.
 
-`vocabulary.seen` n'enregistre que les termes suggérés qui figurent dans
-`src/data/vocabulary.js`, puisqu'il est indexé par l'id du catalogue. En
-pratique le modèle suggère surtout des termes contextuels, donc peu de choses y
-atterrissent — c'est le module vocabulaire qui devra injecter le catalogue dans
-le prompt de dialogue pour que les termes ciblés reviennent en situation.
+Le **module vocabulaire est implémenté** (`features/vocabulary/`) : série de 8
+cartes en rappel actif (terme seul, puis traduction), suivi `mastered`, et
+banque complète consultable.
 
-Restent marqués `ComingSoon` : exercices de grammaire, mode révision du
-vocabulaire. Chaque fichier concerné porte un bloc `TODO(V1)` en tête décrivant
-le travail restant et les fonctions déjà en place.
+Les deux modules sont liés dans les deux sens, et c'est ce qui fait la valeur de
+l'ensemble : le front envoie à `/api/dialogue` les ids des termes à retravailler
+(`vocabularyForDialogue()`, même priorité que la révision), et le prompt demande
+au coach de les replacer **quand ils tombent juste** — jamais de force, deux au
+maximum par réplique. Le terme est alors rencontré en situation plutôt que
+récité, et `vocabulary.seen` se remplit des deux côtés.
+
+Le front décide quels termes méritent d'être remis en circulation, puisque lui
+seul connaît la progression ; le Worker ne fait que les mettre en forme, et
+n'accepte que des **ids** — jamais de texte libre venu du client.
+
+`mastered` suit la dernière réponse et n'est pas cumulatif : un terme qu'elle ne
+retrouve plus redevient à revoir. C'est ce qui fait remonter ce qui s'efface.
+
+Reste marqué `ComingSoon` : les exercices de grammaire. Le fichier concerné
+porte un bloc `TODO(V1)` en tête décrivant le travail restant.
 
 Le module grammaire nécessitera une route `/api/grammar` qui n'existe pas encore.
 

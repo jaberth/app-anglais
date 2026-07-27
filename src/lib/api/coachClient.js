@@ -105,8 +105,15 @@ export function evaluatePlacementTest({ answers }, options) {
  * joue par l'IA, accompagnee du feedback correctif sur la derniere reponse.
  * TODO(V1) : brancher sur l'ecran DialoguePage.
  */
-export function continueDialogue({ scenarioId, level, history, userMessage }, options) {
-  return postJSON('/dialogue', { scenarioId, level, history, userMessage }, options)
+export function continueDialogue(
+  { scenarioId, level, history, userMessage, vocabularyIds },
+  options,
+) {
+  return postJSON(
+    '/dialogue',
+    { scenarioId, level, history, userMessage, vocabularyIds },
+    options,
+  )
 }
 
 export { CoachApiError }

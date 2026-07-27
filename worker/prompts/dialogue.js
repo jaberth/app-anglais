@@ -7,12 +7,16 @@
 
 import { tagsForPrompt } from '../../shared/grammarTopics.js'
 import { getScenario } from '../../shared/scenarios.js'
+import { getVocabularyEntry } from '../../shared/vocabulary.js'
 
 const LEVELS = ['A2', 'B1', 'B2']
 const MAX_HISTORY_TURNS = 12
 const MAX_MESSAGE_LENGTH = 1500
+// Au-dela, la consigne se dilue : le modele saupoudre du jargon au lieu de
+// placer un terme la ou il tombe juste.
+const MAX_VOCABULARY_TERMS = 10
 
-export function buildDialogueRequest({ scenarioId, level, history, userMessage }) {
+export function buildDialogueRequest({ scenarioId, level, history, userMessage, vocabularyIds }) {
   const scenario = getScenario(scenarioId)
   if (!scenario) throw new Error('Scenario inconnu')
 
@@ -37,13 +41,20 @@ export function buildDialogueRequest({ scenarioId, level, history, userMessage }
         }))
     : []
 
+  // Le front envoie des identifiants, jamais du texte libre : on ne fait donc
+  // entrer dans le prompt que des termes issus du catalogue.
+  const vocabulaire = (Array.isArray(vocabularyIds) ? vocabularyIds : [])
+    .map(getVocabularyEntry)
+    .filter(Boolean)
+    .slice(0, MAX_VOCABULARY_TERMS)
+
   return {
-    systemPrompt: buildSystemPrompt(scenario, safeLevel),
+    systemPrompt: buildSystemPrompt(scenario, safeLevel, vocabulaire),
     contents: [...safeHistory, { role: 'user', parts: [{ text: userMessage.trim() }] }],
   }
 }
 
-function buildSystemPrompt(scenario, level) {
+function buildSystemPrompt(scenario, level, vocabulaire) {
   const tags = tagsForPrompt()
 
   return `You are an English coach for a French professional: ${scenario.userRole}. Assume the learner profile this app targets: assessed at ${level}, but under-confident when speaking and prone to freezing. Your priority is therefore to keep her talking.
@@ -59,7 +70,7 @@ RULES:
 - In the feedback, be encouraging first, then correct. Never correct more than the 2 most important mistakes per turn, so she is not discouraged.
 - The "reformulation" must be what a confident native professional would actually say in that meeting - not just a grammatically fixed version of her sentence.
 - Feedback fields are written in French (she is French); the dialogue and reformulation are in English.
-- Tag each mistake with an "errorTag" taken VERBATIM from the closed list below. Do not invent or reword a tag: the app counts these strings to spot recurring errors and to push the matching grammar exercise up her revision queue, so an unlisted value makes the mistake invisible to that mechanism.
+${vocabularySection(vocabulaire)}- Tag each mistake with an "errorTag" taken VERBATIM from the closed list below. Do not invent or reword a tag: the app counts these strings to spot recurring errors and to push the matching grammar exercise up her revision queue, so an unlisted value makes the mistake invisible to that mechanism.
   - grammar points: ${tags.grammar}
   - other: ${tags.other}
 
@@ -74,6 +85,24 @@ Answer ONLY with a valid JSON object matching this schema:
   "reply": string,
   "suggestedVocabulary": [{ "term": string, "translation": string }]
 }`
+}
+
+/**
+ * Remet en circulation le vocabulaire metier que l'utilisatrice travaille.
+ *
+ * L'objectif est de le lui faire RENCONTRER en situation, pas de le lui faire
+ * reciter : un terme croise dans la replique d'un directeur d'agence s'ancre
+ * autrement qu'un terme lu sur une carte. D'ou la consigne de n'en placer que
+ * s'ils tombent juste — un dialogue sature de jargon serait contre-productif.
+ */
+function vocabularySection(vocabulaire) {
+  if (vocabulaire.length === 0) return ''
+
+  const liste = vocabulaire.map((entry) => `"${entry.term}" (${entry.translation})`).join(', ')
+
+  return `- She is currently building this business vocabulary: ${liste}. Weave one or two of these terms into your reply WHEN THEY GENUINELY FIT the conversation, so she meets them in context. Never force them in, and never more than two per reply.
+- In "suggestedVocabulary", pick from that same list whenever a term is relevant to what she just wrote; only propose a term outside the list when nothing in it fits.
+`
 }
 
 export function parseDialogueResponse(text) {
