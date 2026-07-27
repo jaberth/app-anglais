@@ -43,7 +43,7 @@ src/
   features/
     dashboard/          Tableau de bord : session du jour, historique, niveau
     placement-test/     Test de placement : intro, passage, restitution
-    dialogue/           Dialogues scénarisés + feedback correctif
+    dialogue/           Dialogues scénarisés : conversation + feedback correctif
     grammar/            File de révision priorisée par les lacunes
     vocabulary/         Banque de vocabulaire métier
   data/                 Contenus statiques (grammaire, vocabulaire)
@@ -158,7 +158,6 @@ alerte de facturation côté Google Cloud dès la création de la clé Gemini.
 Les écrans marqués `ComingSoon` dans l'UI portent chacun un bloc `TODO(V1)` en
 tête de fichier détaillant le travail restant :
 
-- `features/dialogue/` — fil de conversation et affichage du feedback
 - `features/grammar/` — séries d'exercices (nécessite une route `/api/grammar`)
 - `features/vocabulary/` — mode révision par cartes
 

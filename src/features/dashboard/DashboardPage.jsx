@@ -6,6 +6,14 @@ import { SCENARIOS } from '../../../shared/scenarios.js'
 // question — "qu'est-ce que je fais aujourd'hui ?" — et laisse tout le reste
 // accessible en second rideau.
 
+// `type` reste machine-lisible dans la progression ; la traduction vit ici, au
+// seul endroit qui l'affiche.
+const SESSION_LABELS = {
+  dialogue: 'Dialogue de réunion',
+  grammar: 'Grammaire ciblée',
+  vocabulary: 'Vocabulaire métier',
+}
+
 export default function DashboardPage({ progress, onNavigate }) {
   const { profile, sessions, vocabulary } = progress
   const hasLevel = Boolean(profile.level)
@@ -105,9 +113,14 @@ export default function DashboardPage({ progress, onNavigate }) {
         ) : (
           <ul className="mt-2 divide-y divide-slate-100 text-sm">
             {sessions.slice(-5).reverse().map((session) => (
-              <li key={session.id} className="flex justify-between py-2">
-                <span className="text-ink-700">{session.type}</span>
-                <span className="text-ink-400">{formatDate(session.endedAt)}</span>
+              <li key={session.id} className="flex justify-between gap-3 py-2">
+                <span>
+                  <span className="block text-ink-700">{SESSION_LABELS[session.type] ?? session.type}</span>
+                  {session.summary && (
+                    <span className="block text-xs text-ink-400">{session.summary}</span>
+                  )}
+                </span>
+                <span className="shrink-0 text-ink-400">{formatDate(session.endedAt)}</span>
               </li>
             ))}
           </ul>

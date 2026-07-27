@@ -1,59 +1,32 @@
+// Module de dialogue : choix du scenario, conversation, bilan de session.
+//
+// Le dispositif central de l'app. Le chat ecrit est un choix assume : il permet
+// de se reprendre, de relire, et de recevoir une correction sans la pression de
+// l'oral — c'est ce qui doit lever le blocage avant d'envisager la voix (V2).
+
 import { useState } from 'react'
-import { Card, CardTitle, ComingSoon } from '../../components/Card.jsx'
+import { Button, Card, CardTitle } from '../../components/Card.jsx'
 import { SCENARIOS } from '../../../shared/scenarios.js'
+import { getGrammarTopic } from '../../../shared/grammarTopics.js'
+import ConversationScreen from './ConversationScreen.jsx'
+import { useDialogue } from './useDialogue.js'
 
-// TODO(V1) - Module de dialogue
-//
-// L'ecran de selection ci-dessous est fonctionnel ; reste a implementer la
-// conversation elle-meme :
-//  1. fil de discussion (repliques IA + reponses utilisatrice) ;
-//  2. envoi via continueDialogue() -> lib/api/coachClient.js, en passant
-//     scenarioId, level (profile.level), history et userMessage ;
-//  3. affichage du feedback correctif SOUS la reponse envoyee : encouragement,
-//     corrections (max 2), reformulation "plus pro" ;
-//  4. fin de session -> updateProgress() : ajout dans sessions[], incrementation
-//     de recurringErrors[errorTag], ajout des termes dans vocabulary.seen.
-//
-// Point d'attention : ne jamais bloquer la saisie pendant l'appel reseau, le
-// blocage a l'oral se rejoue a l'ecrit si l'interface donne l'impression de
-// juger. Afficher un etat "le coach repond..." discret.
-
-export default function DialoguePage() {
+export default function DialoguePage({ progress, updateProgress, onNavigate }) {
   const [selected, setSelected] = useState(null)
   const scenario = SCENARIOS.find((item) => item.id === selected)
 
   if (scenario) {
     return (
-      <div className="space-y-4">
-        <Card>
-          <CardTitle>{scenario.title}</CardTitle>
-          <p className="mt-1 text-sm text-ink-500">{scenario.description}</p>
-          <ul className="mt-3 space-y-1 text-sm text-ink-700">
-            {scenario.goals.map((goal) => (
-              <li key={goal} className="flex gap-2">
-                <span aria-hidden className="text-brand-600">
-                  •
-                </span>
-                {goal}
-              </li>
-            ))}
-          </ul>
-          <button
-            type="button"
-            onClick={() => setSelected(null)}
-            className="mt-4 text-sm font-medium text-ink-500 hover:text-ink-900"
-          >
-            ← Changer de scénario
-          </button>
-        </Card>
-
-        <ComingSoon title="Conversation">
-          <p>
-            Fil de discussion à implémenter : réplique du personnage, zone de réponse, et feedback
-            correctif après chaque message.
-          </p>
-        </ComingSoon>
-      </div>
+      // `key` : changer de scenario doit repartir d'une conversation vierge,
+      // pas recycler l'etat du precedent.
+      <DialogueSession
+        key={scenario.id}
+        scenario={scenario}
+        progress={progress}
+        updateProgress={updateProgress}
+        onQuit={() => setSelected(null)}
+        onNavigate={onNavigate}
+      />
     )
   }
 
@@ -74,6 +47,75 @@ export default function DialoguePage() {
           <span className="mt-1 block text-sm text-ink-500">{item.description}</span>
         </button>
       ))}
+    </div>
+  )
+}
+
+function DialogueSession({ scenario, progress, updateProgress, onQuit, onNavigate }) {
+  const dialogue = useDialogue({ scenario, progress, updateProgress })
+
+  if (dialogue.finished) {
+    return <BilanSession scenario={scenario} turns={dialogue.turns} onNavigate={onNavigate} />
+  }
+
+  return <ConversationScreen scenario={scenario} dialogue={dialogue} onQuit={onQuit} />
+}
+
+function BilanSession({ scenario, turns, onNavigate }) {
+  const echanges = turns.filter((turn) => turn.role === 'user' && turn.status === 'done')
+  const corrections = echanges.flatMap((turn) => turn.feedback?.corrections ?? [])
+
+  // Regroupe par point de grammaire : trois fois la meme faute est une
+  // information, trois fautes differentes en est une autre.
+  //
+  // Seuls les tags qui correspondent a un point du catalogue sont listes : cette
+  // carte mene au bouton "Travailler ces points", elle ne doit donc contenir que
+  // ce qui est reellement travaillable.
+  const parTag = new Map()
+  for (const correction of corrections) {
+    const topic = getGrammarTopic(correction.errorTag)
+    if (!topic) continue
+    parTag.set(topic.id, (parTag.get(topic.id) ?? 0) + 1)
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card className="border-brand-200 bg-brand-50">
+        <CardTitle>Session terminée</CardTitle>
+        <p className="mt-1 text-sm text-ink-700">
+          {scenario.title} — {echanges.length} échange{echanges.length > 1 ? 's' : ''} en anglais.
+        </p>
+        <p className="mt-2 text-sm text-ink-700">
+          {corrections.length === 0
+            ? 'Aucune correction sur cette session. C’est un signal, pas un hasard.'
+            : `${corrections.length} correction${corrections.length > 1 ? 's' : ''} — chacune est enregistrée et remonte les points concernés dans ta file de révision.`}
+        </p>
+      </Card>
+
+      {parTag.size > 0 && (
+        <Card>
+          <CardTitle>Ce qui est revenu</CardTitle>
+          <ul className="mt-2 space-y-1.5">
+            {[...parTag.entries()]
+              .sort((a, b) => b[1] - a[1])
+              .map(([tag, count]) => (
+                <li key={tag} className="flex items-baseline justify-between gap-3 text-sm">
+                  <span className="text-ink-900">{getGrammarTopic(tag).label}</span>
+                  <span className="shrink-0 text-xs text-ink-400">
+                    {count} fois
+                  </span>
+                </li>
+              ))}
+          </ul>
+        </Card>
+      )}
+
+      <div className="flex flex-col gap-2">
+        <Button onClick={() => onNavigate('grammar')}>Travailler ces points</Button>
+        <Button variant="secondary" onClick={() => onNavigate('dashboard')}>
+          Retour à l’accueil
+        </Button>
+      </div>
     </div>
   )
 }

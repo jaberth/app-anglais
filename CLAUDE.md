@@ -109,9 +109,29 @@ passage item par item, évaluation, restitution, et écriture du profil + de la
 file de révision. Il est la seule source de `profile.level` et
 `profile.weakPoints`.
 
-Restent marqués `ComingSoon` : fil de conversation du dialogue, exercices de
-grammaire, mode révision du vocabulaire. Chaque fichier concerné porte un bloc
-`TODO(V1)` en tête décrivant le travail restant et les fonctions déjà en place.
+Le **module dialogue est implémenté** (`features/dialogue/`) : sélection du
+scénario, fil de conversation, feedback correctif sous chaque réponse, bilan de
+session. Il alimente `sessions[]`, `recurringErrors` et `vocabulary.seen`.
+
+La première réplique vient du champ `opener` de `shared/scenarios.js`, pas d'un
+appel Gemini : `continueDialogue()` exige un `userMessage` pour produire son
+feedback, la conversation ne peut donc pas s'ouvrir par l'API.
+
+`recurringErrors` ne compte que les tags présents dans `GRAMMAR_TOPICS`, pas
+l'ensemble des tags connus. Les tags hors grammaire (`general`, …) sont des
+réponses légitimes du modèle mais ne correspondent à aucun exercice : les
+compter créerait un compteur mort affiché sous un bouton « travailler ces
+points » qui ne mènerait nulle part.
+
+`vocabulary.seen` n'enregistre que les termes suggérés qui figurent dans
+`src/data/vocabulary.js`, puisqu'il est indexé par l'id du catalogue. En
+pratique le modèle suggère surtout des termes contextuels, donc peu de choses y
+atterrissent — c'est le module vocabulaire qui devra injecter le catalogue dans
+le prompt de dialogue pour que les termes ciblés reviennent en situation.
+
+Restent marqués `ComingSoon` : exercices de grammaire, mode révision du
+vocabulaire. Chaque fichier concerné porte un bloc `TODO(V1)` en tête décrivant
+le travail restant et les fonctions déjà en place.
 
 Le module grammaire nécessitera une route `/api/grammar` qui n'existe pas encore.
 
