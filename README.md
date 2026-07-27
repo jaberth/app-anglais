@@ -154,12 +154,23 @@ réponses statiques.
 Le budget cible est de 0 € (tiers gratuits Gemini + Cloudflare). Configurer une
 alerte de facturation côté Google Cloud dès la création de la clé Gemini.
 
-## Reste à implémenter
+## La boucle pédagogique
 
-Les écrans marqués `ComingSoon` dans l'UI portent chacun un bloc `TODO(V1)` en
-tête de fichier détaillant le travail restant :
+Le périmètre V1 est couvert, et les quatre modules se nourrissent les uns les
+autres — c'est là que réside la valeur de l'ensemble, plus que dans chaque écran
+pris isolément :
 
-- `features/grammar/` — séries d'exercices (nécessite une route `/api/grammar`)
+1. le **test de niveau** détecte les lacunes et ordonne la file de révision ;
+2. le **dialogue** confirme lesquelles bloquent vraiment, en situation, et
+   compte les erreurs qui reviennent ;
+3. la **grammaire** génère des exercices à partir de ses propres phrases
+   fautives, et sort un point de la file au-delà de 80 % de réussite ;
+4. le **vocabulaire** révisé est réinjecté dans les dialogues, pour être
+   rencontré en contexte plutôt que récité.
+
+Les deux boucles de retour comptent autant que le sens direct : une faute sur un
+point acquis le remet dans la file, et un terme qu'elle ne retrouve plus
+redevient à revoir.
 
 ## Hors périmètre V1
 

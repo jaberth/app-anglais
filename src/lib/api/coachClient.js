@@ -116,4 +116,13 @@ export function continueDialogue(
   )
 }
 
+/**
+ * Genere une serie d'exercices ciblee sur un point de grammaire.
+ * `examples` = les formulations fautives qu'elle a reellement produites en
+ * dialogue sur ce point, quand il y en a.
+ */
+export function generateGrammarExercises({ topicId, level, examples }, options) {
+  return postJSON('/grammar', { topicId, level, examples }, options)
+}
+
 export { CoachApiError }

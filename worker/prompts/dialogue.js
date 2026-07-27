@@ -69,7 +69,7 @@ RULES:
 - Never switch to French in the dialogue line.
 - In the feedback, be encouraging first, then correct. Never correct more than the 2 most important mistakes per turn, so she is not discouraged.
 - The "reformulation" must be what a confident native professional would actually say in that meeting - not just a grammatically fixed version of her sentence.
-- Feedback fields are written in French (she is French); the dialogue and reformulation are in English.
+- Feedback fields are written in French (she is French); the dialogue and reformulation are in English. ${TUTOIEMENT}
 ${vocabularySection(vocabulaire)}- Tag each mistake with an "errorTag" taken VERBATIM from the closed list below. Do not invent or reword a tag: the app counts these strings to spot recurring errors and to push the matching grammar exercise up her revision queue, so an unlisted value makes the mistake invisible to that mechanism.
   - grammar points: ${tags.grammar}
   - other: ${tags.other}
@@ -145,6 +145,12 @@ export function stripCodeFence(text) {
     .replace(/```$/, '')
     .trim()
 }
+
+// Consigne de ton, partagee par tous les prompts. Toute l'interface tutoie ;
+// sans cette ligne le modele vouvoie environ une fois sur deux, et le decalage
+// se voit immediatement a l'ecran, sur une app qui se veut familiere.
+export const TUTOIEMENT =
+  'All French text you produce addresses her directly with "tu" (tutoiement), never "vous". The whole app does.'
 
 export function asString(value) {
   return typeof value === 'string' ? value.trim() : ''

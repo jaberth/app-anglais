@@ -142,8 +142,19 @@ export function useDialogue({ scenario, progress, updateProgress }) {
 
     const endedAt = new Date().toISOString()
 
+    // Un point de grammaire qui ressort ici n'est plus acquis. Sans ce retrait,
+    // buildReviewQueue() l'excluerait a vie de la file : il compterait dans
+    // recurringErrors sans jamais redonner lieu a un exercice.
+    const retombees = new Set(
+      corrections.map((correction) => correction.errorTag).filter((tag) => getGrammarTopic(tag)),
+    )
+
     await updateProgress((state) => ({
       ...state,
+      grammar: {
+        ...state.grammar,
+        mastered: state.grammar.mastered.filter((id) => !retombees.has(id)),
+      },
       sessions: [
         ...state.sessions,
         {

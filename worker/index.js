@@ -8,6 +8,7 @@
 
 import { verifyAccessJwt } from './access.js'
 import { buildDialogueRequest, parseDialogueResponse } from './prompts/dialogue.js'
+import { buildGrammarRequest, parseGrammarResponse } from './prompts/grammar.js'
 import {
   buildPlacementTestRequest,
   parsePlacementTestResponse,
@@ -43,6 +44,10 @@ const ROUTES = {
   '/api/dialogue': {
     build: buildDialogueRequest,
     parse: parseDialogueResponse,
+  },
+  '/api/grammar': {
+    build: buildGrammarRequest,
+    parse: parseGrammarResponse,
   },
 }
 

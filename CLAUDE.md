@@ -144,10 +144,25 @@ n'accepte que des **ids** — jamais de texte libre venu du client.
 `mastered` suit la dernière réponse et n'est pas cumulatif : un terme qu'elle ne
 retrouve plus redevient à revoir. C'est ce qui fait remonter ce qui s'efface.
 
-Reste marqué `ComingSoon` : les exercices de grammaire. Le fichier concerné
-porte un bloc `TODO(V1)` en tête décrivant le travail restant.
+Le **module grammaire est implémenté** (`features/grammar/`) : file priorisée,
+séries de 4 à 8 exercices générées par `/api/grammar`, correction immédiate avec
+explication courte, puis écriture de `grammar.stats`.
 
-Le module grammaire nécessitera une route `/api/grammar` qui n'existe pas encore.
+La série est construite à partir de `recurringErrors[topicId].examples` — ses
+propres formulations fautives, collectées en dialogue. C'est ce qui distingue
+l'exercice d'un manuel générique : elle retravaille ses phrases, dans son
+contexte métier.
+
+Le seuil de maîtrise est de 80 % sur une série. Au-delà, le point sort de la
+file ; en dessous, il y reste. Symétriquement, **une faute sur un point acquis
+détectée en dialogue le retire de `mastered`** — sans quoi `buildReviewQueue()`
+l'exclurait à vie et il compterait dans `recurringErrors` sans jamais redonner
+lieu à un exercice.
+
+Plus aucun écran n'est marqué `ComingSoon` : le périmètre V1 est couvert.
+
+Les quatre routes IA existent : `/api/placement-test`,
+`/api/placement-test/evaluate`, `/api/dialogue` et `/api/grammar`.
 
 ## Conventions
 
