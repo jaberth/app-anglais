@@ -33,12 +33,12 @@ export const SCENARIOS = [
     title: 'Pitch à un board / client',
     subtitle: 'Presenting a recommendation to a board',
     description:
-      'Présentation d’une recommandation stratégique à un comité de direction ou un client anglophone, suivie de questions.',
+      'Présentation d’une recommandation stratégique à un comité de direction européen, suivie de questions directes.',
     aiRole:
-      'a demanding board member who asks short, pointed questions about business impact and budget',
+      'a German board member, fluent but non-native in English, who asks short, blunt, pointed questions about business impact and budget, and dislikes vague answers',
     userRole: 'the Digital Marketing & Creative Director presenting the recommendation',
     opener:
-      'Right, we have fifteen minutes. Give me the headline first: what are you recommending, and what does it cost?',
+      'We have fifteen minutes. Please start with the conclusion: what do you recommend, and what is the cost?',
     goals: [
       'Poser le contexte et la recommandation en moins de trois phrases',
       'Justifier un budget avec des chiffres',
@@ -50,9 +50,9 @@ export const SCENARIOS = [
     title: 'One-to-one management',
     subtitle: 'One-to-one with a team member',
     description:
-      'Entretien individuel avec un collaborateur anglophone : suivi, feedback, motivation, recadrage bienveillant.',
+      'Entretien individuel avec un collaborateur espagnol : suivi, feedback, motivation, recadrage bienveillant.',
     aiRole:
-      'a mid-level marketing manager reporting to the user, currently a bit demotivated and vague about progress',
+      'a Spanish mid-level marketing manager reporting to the user, fluent but non-native in English, currently a bit demotivated and vague about progress',
     userRole: 'their manager, the Digital Marketing & Creative Director',
     opener: 'Hi, you wanted to see me? Things are… fine, I guess. Busy month.',
     goals: [

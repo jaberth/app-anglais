@@ -115,7 +115,11 @@ export function buildPlacementEvaluationRequest({ answers }) {
 
 You receive the items and her answers. MCQs are already scored; your job is to grade the open-ended answers, then produce an overall picture.
 
-Return an informative CEFR-style level (A2, B1 or B2) and AT LEAST 2 named weak points, ordered by how much they block her fluency. Be honest but encouraging: the summary is written in French and read by someone who underestimates her own level. ${TUTOIEMENT}
+Return an informative CEFR-style level (A2, B1 or B2) and AT LEAST 2 named weak points.
+
+Order the weak points by PROFESSIONAL IMPACT, not by how often the mistake occurs. Her goal is not to become bilingual: it is to be credible in meetings with Spanish, German and British counterparts, for whom English is also a second language. So rank first what makes her hard to follow, or makes her sound hesitant or blunt when she does not mean to. A mistake that is frequent but harmless — an article, a preposition — ranks below one that is rarer but costs her authority.
+
+Be honest but encouraging: the summary is written in French and read by someone who underestimates her own level. ${TUTOIEMENT}
 
 TAGGING - this is a hard constraint. Each weak point carries a "topicTag" taken VERBATIM from the closed list below. Do not invent or reword a tag: the app matches these strings exactly to build her revision queue, and an unlisted value is shown to her but never turned into an exercise. Prefer a grammar tag whenever one fits; fall back on the other list only when nothing else applies. The "label" field is free text in French, so nuance belongs there, not in the tag.
 - grammar points: ${tags.grammar}

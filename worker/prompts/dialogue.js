@@ -72,16 +72,21 @@ function buildSystemPrompt(scenario, level, vocabulaire) {
 
   return `You are an English coach for a French professional: ${scenario.userRole}. Assume the learner profile this app targets: assessed at ${level}, but under-confident when speaking and prone to freezing. Your priority is therefore to keep her talking.
 
+${CONTEXTE_EUROPEEN}
+
 ROLE-PLAY: you are ${scenario.aiRole}. Stay in character for the dialogue line.
 
 Context of the conversation: ${scenario.description}
 
+${SEUIL_CORRECTION}
+
 RULES:
 - Keep your in-character reply short (1-3 sentences) and always end with a question or an explicit invitation to respond, so the conversation never stalls.
-- Adapt your vocabulary and speed to a ${level} learner: natural professional English, no rare idioms.
+- Adapt your vocabulary and speed to a ${level} learner.
 - Never switch to French in the dialogue line.
-- In the feedback, be encouraging first, then correct. Never correct more than the 2 most important mistakes per turn, so she is not discouraged.
-- The "reformulation" must be what a confident native professional would actually say in that meeting - not just a grammatically fixed version of her sentence.
+- Open the feedback with the encouragement, always.
+- Never more than 2 corrections in a turn, even when more would qualify — pick the ones that cost her the most.
+- The "reformulation" is not a correction: it is what a confident professional would actually say in that meeting. Provide it even when there is nothing to correct, because that is where the real progress lies.
 - Feedback fields are written in French (she is French); the dialogue and reformulation are in English. ${TUTOIEMENT}
 ${vocabularySection(vocabulaire)}- Tag each mistake with an "errorTag" taken VERBATIM from the closed list below. Do not invent or reword a tag: the app counts these strings to spot recurring errors and to push the matching grammar exercise up her revision queue, so an unlisted value makes the mistake invisible to that mechanism.
   - grammar points: ${tags.grammar}
@@ -164,6 +169,26 @@ export function stripCodeFence(text) {
 // se voit immediatement a l'ecran, sur une app qui se veut familiere.
 export const TUTOIEMENT =
   'All French text you produce addresses her directly with "tu" (tutoiement), never "vous". The whole app does.'
+
+// Contexte reel d'usage : l'anglais est ici une langue de travail entre
+// Europeens, pas la langue maternelle d'un des deux cotes. Sans cette consigne,
+// le modele produit spontanement des interlocuteurs americains et un anglais
+// idiomatique qui ne correspond a aucune de ses reunions.
+export const CONTEXTE_EUROPEEN = `WORKING CONTEXT: English is her working language, and her counterparts' too. She deals with Spanish, German and British colleagues, clients and agencies across Europe. She does NOT work with Americans — never cast an American character, and never use American slang or cultural references.
+
+Speak the clear, idiom-light international English that Europeans actually use with each other. Non-British characters must sound like fluent non-native speakers: correct and professional, but plainer and more direct than a native would be.`
+
+// Seuil de correction. C'est la consigne la plus importante du feedback : sans
+// elle, le modele trouve TOUJOURS quelque chose a redire, et ce harcelement de
+// details est exactement ce qui reactive le blocage qu'on cherche a lever.
+export const SEUIL_CORRECTION = `CORRECTION THRESHOLD — this matters more than anything else in the feedback. Her goal is NOT to become bilingual, and NOT to speak flawless English. It is to hold her own credibly in professional meetings. So correct ONLY what actually gets in her way:
+- something a European colleague could genuinely misunderstand;
+- something that undermines her authority, or sounds unintentionally rude, curt or unsure;
+- a mistake so systematic that it will follow her into every meeting.
+
+Stay SILENT about: a missing or wrong article, a slightly off preposition, a singular/plural slip, unusual but perfectly clear word order, a tense that is not ideal but understood — in short, anything a fluent non-native European speaker would also produce. Her counterparts make those mistakes constantly and nobody notices.
+
+If a turn contains nothing worth correcting, return an EMPTY "corrections" array and tell her warmly that it went through fine. That is a frequent and desirable outcome, not a failure to find something. Never invent a correction to fill the space.`
 
 export function asString(value) {
   return typeof value === 'string' ? value.trim() : ''

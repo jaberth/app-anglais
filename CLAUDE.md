@@ -182,9 +182,19 @@ Les quatre routes IA existent : `/api/placement-test`,
   l'utilisatrice (agence créative, campagne, board, budget média) plutôt que des
   situations génériques : c'est la valeur ajoutée face à une app d'anglais
   standard.
-- Le feedback correctif se limite à 2 corrections par tour, encouragement
-  d'abord. Le profil cible sous-estime son niveau réel ; une correction
-  exhaustive est contre-productive et réactive le blocage.
+- **Seuil de correction** (`SEUIL_CORRECTION` dans `worker/prompts/dialogue.js`) :
+  l'objectif n'est pas de devenir bilingue, mais d'être crédible en réunion. On
+  ne corrige donc que ce qui coûte vraiment — une phrase qu'un interlocuteur
+  pourrait mal comprendre, un ton involontairement brutal, une erreur
+  systématique. On se tait sur les articles, prépositions, pluriels et ordres de
+  mots inhabituels mais clairs : ses interlocuteurs non natifs font les mêmes.
+  Zéro correction est un résultat fréquent et souhaitable — ne jamais pousser le
+  modèle à en trouver une. Maximum 2 par tour, encouragement d'abord.
+- **Contexte européen** (`CONTEXTE_EUROPEEN`, même fichier) : ses interlocuteurs
+  sont espagnols, allemands et britanniques — **jamais américains**. L'anglais
+  est une langue de travail des deux côtés. Les personnages non britanniques
+  parlent un anglais correct mais plus direct et moins idiomatique qu'un natif.
+  Sans cette consigne, le modèle produit spontanément des Américains.
 - Vocabulaire limité à deux domaines en V1 : brand strategy et growth &
   acquisition. Gestion de projet studio/agence et management d'équipe sont V2.
 

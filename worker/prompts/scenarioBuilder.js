@@ -11,7 +11,7 @@
 // et replique d'ouverture en anglais (ils entrent dans le prompt du dialogue).
 
 import { normalizeCustomScenario } from '../../shared/scenarios.js'
-import { stripCodeFence, asString, TUTOIEMENT } from './dialogue.js'
+import { stripCodeFence, asString, TUTOIEMENT, CONTEXTE_EUROPEEN } from './dialogue.js'
 
 const MAX_DESCRIPTION_LENGTH = 1200
 const MAX_REFINEMENTS = 6
@@ -42,7 +42,11 @@ const SYSTEM_PROMPT = `You turn a real professional situation, described in Fren
 
 ${TUTOIEMENT}
 
+${CONTEXTE_EUROPEEN}
+
 She is assessed around B1, under-confident when speaking, and practises meetings in English. The scenario must be a realistic WORK conversation she could actually have.
+
+Unless her description names a nationality, cast a European counterpart — Spanish, German or British — and say which one in "aiRole". Never cast an American, even when the situation would make one plausible.
 
 Produce:
 - "title": a short French label she will recognise in a list (max 8 words).
