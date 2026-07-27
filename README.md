@@ -4,9 +4,15 @@ PWA de coaching en anglais professionnel, mono-utilisatrice. Sessions courtes
 (10-15 min) : dialogues de réunion simulés, révision grammaticale ciblée et
 vocabulaire métier (brand strategy / growth & acquisition).
 
-**V1 = texte uniquement.** Aucune reconnaissance vocale ni enregistrement audio :
-le chat écrit sert à lever le blocage à l'oral sans la pression de parler. La
-pratique vocale est explicitement reportée en V2.
+**L'écrit d'abord, l'oral quand elle le décide.** Le chat écrit reste le mode par
+défaut : il permet de se reprendre et de relire, sans la pression de parler.
+Un mode conversation orale s'active ensuite d'un bouton — on y parle, le coach
+répond à voix haute, et aucune correction n'interrompt l'échange : elles sont
+toutes réunies dans le bilan de fin de session.
+
+Les scénarios de dialogue peuvent être créés sur mesure : décrire une réunion
+réelle en français suffit à en obtenir un scénario jouable, ajustable et
+rejouable.
 
 ## Stack
 
@@ -176,5 +182,5 @@ redevient à revoir.
 
 ## Hors périmètre V1
 
-Pratique orale (voix), comptes multiples, correction humaine, application native
+Comptes multiples, correction humaine, application native
 en store, vocabulaire au-delà des deux sous-domaines prioritaires.

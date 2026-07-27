@@ -20,9 +20,17 @@ Il n'y a pas de suite de tests dans ce projet.
 ## Architecture
 
 PWA mono-utilisatrice (une seule apprenante) de coaching en anglais
-professionnel. Sessions de 10-15 min. **V1 texte uniquement** : pas de Web Speech
-API, pas d'audio — le chat écrit est le dispositif choisi pour lever un blocage à
-l'oral. Toute proposition de fonctionnalité vocale est hors périmètre.
+professionnel. Sessions de 10-15 min.
+
+**L'écrit reste le mode par défaut** : c'est lui qui lève le blocage, parce qu'on
+peut s'y reprendre et relire. Le mode oral (`VoiceScreen`) existe depuis, mais il
+se prend volontairement, par un bouton — ne pas en faire le mode d'ouverture.
+
+Règle propre au mode oral : **aucune correction n'est affichée pendant la
+conversation**. Le feedback est bien produit et stocké à chaque tour, puis gardé
+pour le bilan de fin de session. Afficher une correction au milieu d'un échange
+parlé ramène exactement ce que le dispositif cherche à supprimer — le regard qui
+quitte la conversation pour vérifier si c'est juste.
 
 ### Le Worker est la seule porte vers Gemini
 
@@ -77,8 +85,9 @@ Cloudflare KV (prévue si le multi-appareils devient nécessaire) ne touche que 
 `backend` en bas de ce fichier.
 
 Toute la progression tient dans **un seul objet sérialisable**, versionné par
-`SCHEMA_VERSION` dans `schema.js` (v2 depuis l'arrivée de `placementDraft`, le
-brouillon qui rend un test de placement interrompu reprenable). Faire évoluer le
+`SCHEMA_VERSION` dans `schema.js` (v2 avec `placementDraft`, le brouillon qui rend
+un test de placement interrompu reprenable ; v3 avec `customScenarios`, les
+scénarios de dialogue créés sur mesure). Faire évoluer le
 schéma = ajouter une entrée à `MIGRATIONS` et incrémenter la version. Ne jamais modifier une migration déjà
 livrée. `migrate()` retourne un état vierge plutôt que de planter, y compris face
 à un état venu d'une version plus récente.
