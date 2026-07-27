@@ -106,14 +106,24 @@ export function evaluatePlacementTest({ answers }, options) {
  * TODO(V1) : brancher sur l'ecran DialoguePage.
  */
 export function continueDialogue(
-  { scenarioId, level, history, userMessage, vocabularyIds },
+  { scenarioId, customScenario, level, history, userMessage, vocabularyIds },
   options,
 ) {
   return postJSON(
     '/dialogue',
-    { scenarioId, level, history, userMessage, vocabularyIds },
+    // `customScenario` n'accompagne que les scenarios sur mesure : ils ne sont
+    // pas dans la liste fermee, le Worker ne peut donc pas les retrouver seul.
+    { scenarioId, customScenario, level, history, userMessage, vocabularyIds },
     options,
   )
+}
+
+/**
+ * Fabrique un scenario a partir d'une situation decrite librement.
+ * `refinements` = les ajustements demandes depuis, dans l'ordre.
+ */
+export function buildScenario({ description, refinements }, options) {
+  return postJSON('/scenario', { description, refinements }, options)
 }
 
 /**

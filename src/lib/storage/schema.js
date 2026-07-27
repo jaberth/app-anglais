@@ -5,7 +5,7 @@
 // dans Golf Tracker). Aucun composant ne doit ecrire dans localStorage
 // directement : tout passe par progressStore.js.
 
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 
 export const STORAGE_KEY = 'coach-anglais:progress'
 
@@ -59,6 +59,11 @@ export function createInitialState() {
     // et le test dure 10 minutes, le refaire de zero serait doublement punitif.
     // Remis a null des que le test est evalue ou abandonne explicitement.
     placementDraft: null, // { id, startedAt, index, items[], answers{} }
+
+    // Scenarios de dialogue crees sur mesure, les plus recents en tete. Ils sont
+    // persistes pour etre rejouables : les redecrire a chaque fois couterait un
+    // appel Gemini et le temps de reformuler la meme situation.
+    customScenarios: [], // { ...scenario, createdAt }
   }
 }
 
@@ -70,6 +75,8 @@ export function createInitialState() {
 const MIGRATIONS = {
   // v1 -> v2 : arrivee du test de placement reprenable.
   1: (state) => ({ ...state, schemaVersion: 2, placementDraft: null }),
+  // v2 -> v3 : arrivee des scenarios de dialogue personnalises.
+  2: (state) => ({ ...state, schemaVersion: 3, customScenarios: [] }),
 }
 
 /**

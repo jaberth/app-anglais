@@ -6,7 +6,7 @@
 //  - la replique suivante du personnage joue par l'IA.
 
 import { tagsForPrompt } from '../../shared/grammarTopics.js'
-import { getScenario } from '../../shared/scenarios.js'
+import { getScenario, isCustomScenarioId, normalizeCustomScenario } from '../../shared/scenarios.js'
 import { getVocabularyEntry } from '../../shared/vocabulary.js'
 
 const LEVELS = ['A2', 'B1', 'B2']
@@ -16,8 +16,21 @@ const MAX_MESSAGE_LENGTH = 1500
 // placer un terme la ou il tombe juste.
 const MAX_VOCABULARY_TERMS = 10
 
-export function buildDialogueRequest({ scenarioId, level, history, userMessage, vocabularyIds }) {
-  const scenario = getScenario(scenarioId)
+export function buildDialogueRequest({
+  scenarioId,
+  customScenario,
+  level,
+  history,
+  userMessage,
+  vocabularyIds,
+}) {
+  // Un scenario livre avec l'app est resolu par son identifiant ; un scenario
+  // sur mesure voyage avec la requete, et n'est donc jamais cru sur parole :
+  // normalizeCustomScenario() le retaille aux champs et longueurs attendus.
+  const scenario = isCustomScenarioId(scenarioId)
+    ? normalizeCustomScenario(customScenario, { id: scenarioId })
+    : getScenario(scenarioId)
+
   if (!scenario) throw new Error('Scenario inconnu')
 
   const safeLevel = LEVELS.includes(level) ? level : 'B1'

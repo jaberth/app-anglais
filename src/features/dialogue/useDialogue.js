@@ -46,6 +46,9 @@ export function useDialogue({ scenario, progress, updateProgress }) {
         const response = await continueDialogue(
           {
             scenarioId: scenario.id,
+            // Un scenario sur mesure n'existe pas dans la liste fermee du
+            // Worker : il doit voyager avec chaque tour.
+            customScenario: scenario.custom ? scenario : undefined,
             level: progress.profile.level ?? 'B1',
             history,
             userMessage: text,
@@ -89,7 +92,7 @@ export function useDialogue({ scenario, progress, updateProgress }) {
         if (aliveRef.current) setPending(false)
       }
     },
-    [progress.profile.level, progress.vocabulary.seen, scenario.id],
+    [progress.profile.level, progress.vocabulary.seen, scenario],
   )
 
   const send = useCallback(

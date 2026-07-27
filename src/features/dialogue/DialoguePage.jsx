@@ -9,25 +9,58 @@ import { Button, Card, CardTitle } from '../../components/Card.jsx'
 import { SCENARIOS } from '../../../shared/scenarios.js'
 import { getGrammarTopic } from '../../../shared/grammarTopics.js'
 import ConversationScreen from './ConversationScreen.jsx'
+import ScenarioBuilder from './ScenarioBuilder.jsx'
 import { useDialogue } from './useDialogue.js'
 
-export default function DialoguePage({ progress, updateProgress, onNavigate }) {
-  const [selected, setSelected] = useState(null)
-  const scenario = SCENARIOS.find((item) => item.id === selected)
+// Au-dela, la liste de choix devient une corvee de tri plutot qu'un raccourci.
+const MAX_SCENARIOS_PERSONNALISES = 8
 
-  if (scenario) {
+export default function DialoguePage({ progress, updateProgress, onNavigate }) {
+  const [active, setActive] = useState(null)
+  const [creating, setCreating] = useState(false)
+
+  const customScenarios = progress.customScenarios ?? []
+
+  /** Persiste le scenario cree, puis ouvre la conversation. */
+  async function demarrerScenarioCree(scenario) {
+    const createdAt = new Date().toISOString()
+
+    await updateProgress((state) => ({
+      ...state,
+      customScenarios: [
+        { ...scenario, createdAt },
+        ...(state.customScenarios ?? []).filter((item) => item.id !== scenario.id),
+      ].slice(0, MAX_SCENARIOS_PERSONNALISES),
+    }))
+
+    setCreating(false)
+    setActive(scenario)
+  }
+
+  async function supprimerScenario(id) {
+    await updateProgress((state) => ({
+      ...state,
+      customScenarios: (state.customScenarios ?? []).filter((item) => item.id !== id),
+    }))
+  }
+
+  if (active) {
     return (
       // `key` : changer de scenario doit repartir d'une conversation vierge,
       // pas recycler l'etat du precedent.
       <DialogueSession
-        key={scenario.id}
-        scenario={scenario}
+        key={active.id}
+        scenario={active}
         progress={progress}
         updateProgress={updateProgress}
-        onQuit={() => setSelected(null)}
+        onQuit={() => setActive(null)}
         onNavigate={onNavigate}
       />
     )
+  }
+
+  if (creating) {
+    return <ScenarioBuilder onStart={demarrerScenarioCree} onCancel={() => setCreating(false)} />
   }
 
   return (
@@ -35,18 +68,62 @@ export default function DialoguePage({ progress, updateProgress, onNavigate }) {
       <p className="text-sm text-ink-500">
         Choisis la situation que tu veux travailler aujourd’hui.
       </p>
+
       {SCENARIOS.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => setSelected(item.id)}
-          className="block w-full rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-brand-200 hover:bg-brand-50"
-        >
-          <span className="block text-sm font-semibold text-ink-900">{item.title}</span>
-          <span className="block text-xs italic text-ink-400">{item.subtitle}</span>
-          <span className="mt-1 block text-sm text-ink-500">{item.description}</span>
-        </button>
+        <ChoixScenario key={item.id} scenario={item} onSelect={() => setActive(item)} />
       ))}
+
+      <button
+        type="button"
+        onClick={() => setCreating(true)}
+        className="block w-full rounded-2xl border border-dashed border-brand-200 bg-brand-50 p-4 text-left transition-colors hover:border-brand-500"
+      >
+        <span className="block text-sm font-semibold text-brand-700">Créer ma situation</span>
+        <span className="mt-1 block text-sm text-ink-500">
+          Décris une réunion que tu as vraiment à préparer, le coach en fait un scénario.
+        </span>
+      </button>
+
+      {customScenarios.length > 0 && (
+        <>
+          <p className="pt-2 text-xs font-semibold uppercase tracking-wide text-ink-400">
+            Mes situations
+          </p>
+          {customScenarios.map((item) => (
+            <ChoixScenario
+              key={item.id}
+              scenario={item}
+              onSelect={() => setActive(item)}
+              onDelete={() => supprimerScenario(item.id)}
+            />
+          ))}
+        </>
+      )}
+    </div>
+  )
+}
+
+function ChoixScenario({ scenario, onSelect, onDelete }) {
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={onSelect}
+        className="block w-full rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-brand-200 hover:bg-brand-50"
+      >
+        <span className="block pr-16 text-sm font-semibold text-ink-900">{scenario.title}</span>
+        <span className="block text-xs italic text-ink-400">{scenario.subtitle}</span>
+        <span className="mt-1 block text-sm text-ink-500">{scenario.description}</span>
+      </button>
+      {onDelete && (
+        <button
+          type="button"
+          onClick={onDelete}
+          className="absolute right-3 top-3 rounded-lg px-2 py-1 text-xs font-medium text-ink-400 hover:bg-white hover:text-ink-900"
+        >
+          Supprimer
+        </button>
+      )}
     </div>
   )
 }

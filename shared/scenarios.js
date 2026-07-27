@@ -66,3 +66,70 @@ export const SCENARIOS = [
 export function getScenario(id) {
   return SCENARIOS.find((scenario) => scenario.id === id) || null
 }
+
+// --- Scenarios personnalises ------------------------------------------------
+//
+// Un scenario sur mesure ne peut pas etre resolu par getScenario() : il n'existe
+// pas dans la liste ci-dessus, il est fabrique a la demande puis transmis par le
+// client a chaque tour. Cela veut dire que du texte venu du navigateur entre
+// dans le prompt systeme, alors que jusqu'ici le front n'envoyait que des
+// identifiants.
+//
+// D'ou cette normalisation, appliquee des DEUX cotes : le front s'en sert pour
+// stocker une forme propre, le Worker pour ne jamais faire confiance a ce qu'il
+// recoit. Les plafonds sont volontairement serres — ils bornent a la fois la
+// surface d'injection et la consommation de quota.
+
+export const CUSTOM_SCENARIO_PREFIX = 'custom:'
+
+const LIMITS = {
+  title: 120,
+  subtitle: 160,
+  description: 700,
+  aiRole: 400,
+  userRole: 250,
+  opener: 500,
+  goal: 200,
+  goals: 5,
+}
+
+export function isCustomScenarioId(id) {
+  return typeof id === 'string' && id.startsWith(CUSTOM_SCENARIO_PREFIX)
+}
+
+function clamp(value, max) {
+  return typeof value === 'string' ? value.trim().slice(0, max) : ''
+}
+
+/**
+ * Ramene un scenario d'origine quelconque a la forme exacte attendue par le
+ * prompt. Retourne null si l'essentiel manque : mieux vaut refuser que lancer
+ * un dialogue sans role ni replique d'ouverture.
+ */
+export function normalizeCustomScenario(raw, { id } = {}) {
+  if (!raw || typeof raw !== 'object') return null
+
+  const goals = (Array.isArray(raw.goals) ? raw.goals : [])
+    .map((goal) => clamp(goal, LIMITS.goal))
+    .filter(Boolean)
+    .slice(0, LIMITS.goals)
+
+  const scenario = {
+    id: id ?? (isCustomScenarioId(raw.id) ? raw.id : `${CUSTOM_SCENARIO_PREFIX}${crypto.randomUUID()}`),
+    custom: true,
+    title: clamp(raw.title, LIMITS.title),
+    subtitle: clamp(raw.subtitle, LIMITS.subtitle),
+    description: clamp(raw.description, LIMITS.description),
+    aiRole: clamp(raw.aiRole, LIMITS.aiRole),
+    userRole: clamp(raw.userRole, LIMITS.userRole),
+    opener: clamp(raw.opener, LIMITS.opener),
+    goals,
+  }
+
+  // aiRole et opener portent tout le jeu de role ; description situe la scene.
+  // Sans eux il n'y a pas de scenario, juste un titre.
+  if (!scenario.aiRole || !scenario.opener || !scenario.description) return null
+  if (!scenario.title) scenario.title = 'Ma situation'
+
+  return scenario
+}
