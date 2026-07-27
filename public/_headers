@@ -1,0 +1,10 @@
+# En-tetes appliques par le serveur d'assets Cloudflare.
+#
+# Ce fichier existe parce que le Worker n'est PAS invoque pour les assets
+# statiques : run_worker_first ne cible que /api/*, tout le reste est servi
+# directement. Poser l'en-tete depuis le code du Worker serait donc sans effet.
+#
+# App privee mono-utilisatrice : defense en profondeur si Access etait un jour
+# desactive par erreur.
+/*
+  X-Robots-Tag: noindex, nofollow

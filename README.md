@@ -146,8 +146,10 @@ trivial à forger.
 Le développement local n'est pas affecté : sur `localhost`, la vérification est
 court-circuitée (`isLocalDev` dans `worker/index.js`).
 
-Le Worker pose par ailleurs `X-Robots-Tag: noindex, nofollow` sur toutes les
-réponses statiques.
+`public/_headers` pose par ailleurs `X-Robots-Tag: noindex, nofollow` sur toutes
+les réponses. Attention si tu touches à ce point : poser cet en-tête depuis le
+code du Worker serait **sans effet**, car `run_worker_first` ne cible que
+`/api/*` — les assets ne passent jamais par le Worker.
 
 ### 5. Alerte de facturation
 

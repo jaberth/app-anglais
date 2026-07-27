@@ -70,12 +70,11 @@ export default {
       return handleAiRoute(request, env, route)
     }
 
-    const assetResponse = await env.ASSETS.fetch(request)
-    // Defense en profondeur : meme si Cloudflare Access etait un jour desactive
-    // par erreur, on demande explicitement aux robots de ne pas indexer l'app.
-    const response = new Response(assetResponse.body, assetResponse)
-    response.headers.set('X-Robots-Tag', 'noindex, nofollow')
-    return response
+    // run_worker_first ne cible que /api/* : les assets sont servis directement
+    // par Cloudflare, sans passer par ce code. Poser un en-tete ici serait donc
+    // sans effet sur les vraies requetes de pages — c'est pourquoi
+    // X-Robots-Tag est declare dans public/_headers.
+    return env.ASSETS.fetch(request)
   },
 }
 
