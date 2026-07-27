@@ -64,18 +64,39 @@ qui rendra la bascule vers Cloudflare KV indolore.
 
 ### 1. Clé Gemini (Secrets Store)
 
-La clé ne doit jamais apparaître dans le repo ni dans le bundle client.
+La clé ne doit jamais apparaître dans le repo ni dans le bundle client. Elle est
+déjà en place : le bloc `[[secrets_store_secrets]]` de `wrangler.toml` est
+renseigné, rien à faire pour un déploiement normal.
+
+Le store est **partagé avec Golf Tracker** — un Secrets Store est un coffre au
+niveau du compte, pas du Worker. Seul le nom du secret diffère :
+
+| App | `secret_name` |
+| ------------- | ------------------------ |
+| Golf Tracker | `GEMINI_API_KEY` |
+| Coach Anglais | `GEMINI_API_KEY_ANGLAIS` |
+
+⚠️ Ne jamais créer de secret nommé `GEMINI_API_KEY` dans ce store : ce serait
+écraser la clé de Golf Tracker. Les deux apps ont volontairement des clés
+Gemini distinctes, issues de projets Google Cloud différents, pour ne pas
+partager le quota gratuit ni la révocation.
+
+Le `binding` reste `GEMINI_API_KEY` des deux côtés : c'est le nom de la variable
+lue par le Worker (`env.GEMINI_API_KEY`), pas celui du secret.
+
+### Recréer la clé (rotation, ou nouvelle machine)
+
+Deux fois, car wrangler agit en local par défaut. La seconde n'est utile que
+pour `npm run dev:worker`, et doit être lancée **depuis ce répertoire** (la
+persistance locale est relative au dossier courant) :
 
 ```bash
-npx wrangler secrets-store store create coach-anglais
+npx wrangler secrets-store secret create 672323dbb30e4e80a1ff5c7226e05f22 --name GEMINI_API_KEY_ANGLAIS --scopes workers --remote
 ```
 
 ```bash
-npx wrangler secrets-store secret create <STORE_ID> --name GEMINI_API_KEY --scopes workers
+npx wrangler secrets-store secret create 672323dbb30e4e80a1ff5c7226e05f22 --name GEMINI_API_KEY_ANGLAIS --scopes workers
 ```
-
-Puis décommenter et renseigner le bloc `[[secrets_store_secrets]]` dans
-`wrangler.toml` avec le `store_id` obtenu.
 
 ### 2. Déployer
 
