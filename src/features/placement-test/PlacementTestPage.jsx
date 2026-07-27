@@ -153,19 +153,34 @@ function ErrorScreen({ error, onRetry, onNavigate }) {
   // en base, il suffit de relancer l'analyse.
   const isEvaluation = error?.action === 'evaluate'
 
+  // Session Cloudflare Access expiree : reessayer ne sert a rien tant que la
+  // page n'a pas ete rechargee, seul moyen de repasser par l'ecran de connexion.
+  const isSession = error?.kind === 'session'
+
   return (
     <div className="space-y-4">
       <Card>
-        <CardTitle>{isEvaluation ? 'L’analyse n’a pas abouti' : 'Le test n’a pas pu démarrer'}</CardTitle>
+        <CardTitle>
+          {isSession
+            ? 'Reconnexion nécessaire'
+            : isEvaluation
+              ? 'L’analyse n’a pas abouti'
+              : 'Le test n’a pas pu démarrer'}
+        </CardTitle>
         <p className="mt-2 text-sm text-ink-700">{error?.message}</p>
         {isEvaluation && (
           <p className="mt-2 text-sm text-ink-500">
-            Tes réponses sont enregistrées. Tu peux relancer l’analyse maintenant ou plus tard.
+            Tes réponses sont enregistrées{isSession ? ' et te seront rendues après reconnexion' : ''}.
+            {isSession ? '' : ' Tu peux relancer l’analyse maintenant ou plus tard.'}
           </p>
         )}
 
         <div className="mt-4 flex flex-col gap-2">
-          <Button onClick={onRetry}>{isEvaluation ? 'Relancer l’analyse' : 'Réessayer'}</Button>
+          {isSession ? (
+            <Button onClick={() => window.location.reload()}>Recharger la page</Button>
+          ) : (
+            <Button onClick={onRetry}>{isEvaluation ? 'Relancer l’analyse' : 'Réessayer'}</Button>
+          )}
           <Button variant="secondary" onClick={() => onNavigate('dashboard')}>
             Retour à l’accueil
           </Button>

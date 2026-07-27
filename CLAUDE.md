@@ -38,6 +38,11 @@ Ajouter une capacité IA = deux gestes :
    si inexploitable) ;
 2. une entrée dans la table `ROUTES` de `worker/index.js`.
 
+`worker/access.js` garde l'entrée des routes `/api/*` : il vérifie la signature
+du jeton Cloudflare Access plutôt que de faire confiance à l'en-tête
+`Cf-Access-Authenticated-User-Email`. La vérification est court-circuitée sur
+`localhost` uniquement (`isLocalDev`), sans quoi `dev:worker` serait inutilisable.
+
 `callGemini()` est générique et n'a pas à être modifiée. Les réponses du modèle
 sont toujours normalisées avant d'atteindre l'UI : aucun composant ne doit se
 défendre contre un champ manquant.
@@ -113,7 +118,11 @@ Le module grammaire nécessitera une route `/api/grammar` qui n'existe pas encor
 
 ## Déploiement
 
-Voir `README.md`. Deux points à ne pas oublier : renseigner le bloc
-`[[secrets_store_secrets]]` de `wrangler.toml` (commenté tant que le store n'est
-pas créé), et protéger l'URL par Cloudflare Access — l'app n'a aucune
-authentification applicative, donc sans Access le quota Gemini est exposé.
+Voir `README.md`. Le bloc `[[secrets_store_secrets]]` est renseigné : le store
+est partagé avec Golf Tracker, mais le `secret_name` est distinct
+(`GEMINI_API_KEY_ANGLAIS`). Ne jamais créer de secret `GEMINI_API_KEY` dans ce
+store, ce serait écraser la clé de l'autre app.
+
+Le seul point restant est `ACCESS_AUD` dans `[vars]`, à reporter depuis
+l'application Cloudflare Access une fois celle-ci créée. Tant qu'il vaut son
+placeholder, `/api/*` répond 401 en production — fail-closed délibéré.

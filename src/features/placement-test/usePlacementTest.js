@@ -81,7 +81,7 @@ export function usePlacementTest({ progress, updateProgress }) {
       persistDraft({ id, startedAt: openedAt, index: 0, items: generated, answers: {} })
     } catch (caught) {
       if (caught.name === 'AbortError' || !aliveRef.current) return
-      setError({ message: caught.message, action: 'generate' })
+      setError({ message: caught.message, kind: caught.kind, action: 'generate' })
       setPhase('error')
     }
   }, [persistDraft])
@@ -167,7 +167,7 @@ export function usePlacementTest({ progress, updateProgress }) {
         if (caught.name === 'AbortError' || !aliveRef.current) return
         // On garde items et answers : le brouillon est intact, elle peut
         // relancer l'evaluation sans repasser le test.
-        setError({ message: caught.message, action: 'evaluate' })
+        setError({ message: caught.message, kind: caught.kind, action: 'evaluate' })
         setPhase('error')
       }
     },

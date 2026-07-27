@@ -26,6 +26,20 @@ binding = "GEMINI_API_KEY"
 store_id = "672323dbb30e4e80a1ff5c7226e05f22"
 secret_name = "GEMINI_API_KEY_ANGLAIS"
 
+# Cloudflare Access, en defense en profondeur (voir worker/access.js).
+#
+# ACCESS_AUD est le tag d'audience propre a l'application Access, lisible dans
+# le dashboard Zero Trust une fois l'application creee. Tant qu'il vaut le
+# placeholder ci-dessous, toutes les routes /api/* repondent 401 en production.
+# C'est volontaire : une app temporairement inutilisable vaut mieux qu'un quota
+# Gemini ouvert a qui trouve l'URL.
+#
+# Le developpement local n'est pas concerne : sur localhost, la verification est
+# court-circuitee (isLocalDev dans worker/index.js).
+[vars]
+ACCESS_AUD = "<A_RENSEIGNER>"
+ACCESS_JWKS_URL = "https://berthaud-ja.cloudflareaccess.com/cdn-cgi/access/certs"
+
 # Migration V2 : quand LocalStorage ne suffira plus (multi-appareils), creer un
 # namespace KV et brancher le backend de src/lib/storage/progressStore.js dessus.
 # [[kv_namespaces]]

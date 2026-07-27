@@ -5,14 +5,22 @@
 
 const API_BASE = '/api'
 
+/**
+ * `kind` permet a l'UI de proposer la bonne action sans reinterpreter le
+ * message : 'session' appelle un rechargement, 'quota' une attente, le reste
+ * une nouvelle tentative.
+ */
 class CoachApiError extends Error {
-  constructor(message, { status, detail } = {}) {
+  constructor(message, { status, detail, kind = 'server' } = {}) {
     super(message)
     this.name = 'CoachApiError'
     this.status = status
     this.detail = detail
+    this.kind = kind
   }
 }
+
+const SESSION_EXPIREE = 'Ta session a expiré. Recharge la page pour te reconnecter.'
 
 async function postJSON(path, body, { signal } = {}) {
   let response
@@ -22,13 +30,30 @@ async function postJSON(path, body, { signal } = {}) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
       signal,
+      // Sans `manual`, la redirection que Cloudflare Access renvoie vers sa page
+      // de connexion serait suivie vers un autre domaine, echouerait sur CORS,
+      // et arriverait ici en simple TypeError — indiscernable d'une coupure
+      // reseau. On la veut visible pour pouvoir la nommer.
+      redirect: 'manual',
     })
   } catch (error) {
     // AbortError = l'utilisatrice a quitte l'ecran, ce n'est pas une panne.
     if (error.name === 'AbortError') throw error
-    throw new CoachApiError('Connexion impossible. Verifie ta connexion internet.', {
+    throw new CoachApiError('Connexion impossible. Vérifie ta connexion internet.', {
       detail: error.message,
+      kind: 'network',
     })
+  }
+
+  // Access intercepte avant le Worker : redirection vers l'ecran de connexion.
+  if (response.type === 'opaqueredirect' || response.status === 0) {
+    throw new CoachApiError(SESSION_EXPIREE, { status: 0, kind: 'session' })
+  }
+
+  // Access a laisse passer mais le jeton n'est plus valide : c'est le 401 pose
+  // par worker/access.js.
+  if (response.status === 401 || response.status === 403) {
+    throw new CoachApiError(SESSION_EXPIREE, { status: response.status, kind: 'session' })
   }
 
   const rawBody = await response.text()
@@ -36,18 +61,25 @@ async function postJSON(path, body, { signal } = {}) {
   if (!response.ok) {
     throw new CoachApiError(
       response.status === 429
-        ? "Quota Gemini atteint pour le moment. Reessaie dans quelques minutes."
-        : "Le coach n'a pas pu repondre. Reessaie dans un instant.",
-      { status: response.status, detail: rawBody },
+        ? 'Quota Gemini atteint pour le moment. Réessaie dans quelques minutes.'
+        : "Le coach n'a pas pu répondre. Réessaie dans un instant.",
+      { status: response.status, detail: rawBody, kind: response.status === 429 ? 'quota' : 'server' },
     )
+  }
+
+  // Access peut aussi servir sa page de connexion en 200 : du HTML la ou on
+  // attend du JSON signe la meme expiration, pas une reponse corrompue.
+  if (/^\s*</.test(rawBody)) {
+    throw new CoachApiError(SESSION_EXPIREE, { status: response.status, kind: 'session' })
   }
 
   try {
     return JSON.parse(rawBody)
   } catch {
-    throw new CoachApiError('Reponse du coach illisible.', {
+    throw new CoachApiError('Réponse du coach illisible.', {
       status: response.status,
       detail: rawBody,
+      kind: 'server',
     })
   }
 }

@@ -6,6 +6,7 @@
 //  2. tout le reste : les fichiers statiques du build Vite (dist/), servis via
 //     le binding ASSETS.
 
+import { verifyAccessJwt } from './access.js'
 import { buildDialogueRequest, parseDialogueResponse } from './prompts/dialogue.js'
 import {
   buildPlacementTestRequest,
@@ -52,6 +53,15 @@ export default {
     if (url.pathname.startsWith('/api/')) {
       const route = ROUTES[url.pathname]
       if (!route) return jsonError('Route inconnue', 404)
+
+      // Seules les routes /api/* consomment du quota Gemini : c'est la ce qu'il
+      // y a a proteger. Les assets statiques ne sont qu'une coquille sans
+      // elles, et Access les couvre de toute facon en amont.
+      if (!isLocalDev(url)) {
+        const identity = await verifyAccessJwt(request, env)
+        if (!identity) return jsonError('Non authentifie', 401)
+      }
+
       return handleAiRoute(request, env, route)
     }
 
@@ -164,6 +174,17 @@ async function callGemini(env, { systemPrompt, contents, generationConfig }) {
   if (!value) return { ok: false, error: 'Reponse Gemini vide', status: 502 }
 
   return { ok: true, value }
+}
+
+/**
+ * `wrangler dev` sert le Worker sur localhost, ou aucun jeton Access n'existe :
+ * l'exiger rendrait tout developpement local impossible. En production le
+ * Worker n'est joignable que via son hostname workers.dev (ou son domaine
+ * personnalise) — c'est ce hostname qui arrive ici, et le routage Cloudflare en
+ * depend, donc il ne peut pas etre remplace par "localhost" par un tiers.
+ */
+function isLocalDev(url) {
+  return url.hostname === 'localhost' || url.hostname === '127.0.0.1'
 }
 
 function jsonError(message, status) {

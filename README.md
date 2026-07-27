@@ -98,13 +98,18 @@ npx wrangler secrets-store secret create 672323dbb30e4e80a1ff5c7226e05f22 --name
 npx wrangler secrets-store secret create 672323dbb30e4e80a1ff5c7226e05f22 --name GEMINI_API_KEY_ANGLAIS --scopes workers
 ```
 
-### 2. Déployer
+### 2. Premier déploiement
 
 ```bash
 npm run deploy
 ```
 
-### 3. Protéger l'URL avec Cloudflare Access — recommandé
+L'app est alors en ligne mais **volontairement inerte** : `ACCESS_AUD` vaut
+encore son placeholder dans `wrangler.toml`, donc toutes les routes `/api/*`
+répondent 401. C'est l'ordre voulu — il faut une URL déployée pour créer
+l'application Access, et l'AUD n'existe qu'une fois celle-ci créée.
+
+### 3. Protéger l'URL avec Cloudflare Access — obligatoire
 
 Sans cette étape, l'URL `*.workers.dev` est publique : n'importe qui la
 découvrant peut consommer le quota Gemini du compte. L'app n'a aucune
@@ -114,15 +119,36 @@ barrière.
 Dans le dashboard Cloudflare → **Zero Trust → Access → Applications** :
 
 1. **Add an application** → _Self-hosted_
-2. Domaine : celui du Worker déployé
+2. Domaine : celui du Worker déployé (`coach-anglais.<sous-domaine>.workers.dev`)
 3. Policy : _Allow_, règle **Emails** → l'adresse email de l'utilisatrice
 4. Ajouter une seconde règle _Allow_ avec l'email de l'administrateur, sinon tu
    seras toi-même bloqué hors de ton app
 
-Le Worker pose déjà `X-Robots-Tag: noindex, nofollow` sur toutes les réponses
-statiques, en défense en profondeur.
+### 4. Reporter l'AUD puis redéployer
 
-### 4. Alerte de facturation
+L'application créée expose un **Application Audience (AUD) Tag** — une chaîne
+hexadécimale, dans _Overview_ de l'application Access. Le reporter dans le bloc
+`[vars]` de `wrangler.toml` à la place de `<A_RENSEIGNER>`, puis :
+
+```bash
+npm run deploy
+```
+
+Le Worker ne se contente pas de faire confiance à Access : `worker/access.js`
+vérifie cryptographiquement le jeton `Cf-Access-Jwt-Assertion` sur chaque appel
+`/api/*` — signature RS256 contre le JWKS du locataire, plus contrôle de
+l'audience, de l'émetteur et de l'expiration. C'est une défense en profondeur :
+si Access était un jour désactivé par erreur, le quota Gemini resterait fermé.
+L'en-tête `Cf-Access-Authenticated-User-Email` n'est jamais utilisé seul, il est
+trivial à forger.
+
+Le développement local n'est pas affecté : sur `localhost`, la vérification est
+court-circuitée (`isLocalDev` dans `worker/index.js`).
+
+Le Worker pose par ailleurs `X-Robots-Tag: noindex, nofollow` sur toutes les
+réponses statiques.
+
+### 5. Alerte de facturation
 
 Le budget cible est de 0 € (tiers gratuits Gemini + Cloudflare). Configurer une
 alerte de facturation côté Google Cloud dès la création de la clé Gemini.
