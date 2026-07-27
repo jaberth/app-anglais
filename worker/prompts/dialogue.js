@@ -5,6 +5,7 @@
 //  - le feedback correctif sur la reponse de l'utilisatrice ;
 //  - la replique suivante du personnage joue par l'IA.
 
+import { tagsForPrompt } from '../../shared/grammarTopics.js'
 import { getScenario } from '../../shared/scenarios.js'
 
 const LEVELS = ['A2', 'B1', 'B2']
@@ -43,6 +44,8 @@ export function buildDialogueRequest({ scenarioId, level, history, userMessage }
 }
 
 function buildSystemPrompt(scenario, level) {
+  const tags = tagsForPrompt()
+
   return `You are an English coach for a French professional: ${scenario.userRole}. Assume the learner profile this app targets: assessed at ${level}, but under-confident when speaking and prone to freezing. Your priority is therefore to keep her talking.
 
 ROLE-PLAY: you are ${scenario.aiRole}. Stay in character for the dialogue line.
@@ -56,7 +59,9 @@ RULES:
 - In the feedback, be encouraging first, then correct. Never correct more than the 2 most important mistakes per turn, so she is not discouraged.
 - The "reformulation" must be what a confident native professional would actually say in that meeting - not just a grammatically fixed version of her sentence.
 - Feedback fields are written in French (she is French); the dialogue and reformulation are in English.
-- Tag each mistake with a stable kebab-case identifier (e.g. "past-simple-vs-present-perfect", "prepositions", "article-usage", "word-order") so the app can track recurring errors over time.
+- Tag each mistake with an "errorTag" taken VERBATIM from the closed list below. Do not invent or reword a tag: the app counts these strings to spot recurring errors and to push the matching grammar exercise up her revision queue, so an unlisted value makes the mistake invisible to that mechanism.
+  - grammar points: ${tags.grammar}
+  - other: ${tags.other}
 
 Answer ONLY with a valid JSON object matching this schema:
 {

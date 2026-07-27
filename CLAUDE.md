@@ -54,12 +54,19 @@ C'est l'invariant central de l'app. Un même identifiant (`prepositions`,
 
 - `topicTag` sur les items du test de placement et ses `weakPoints` ;
 - `errorTag` sur les corrections renvoyées par le module dialogue ;
-- `id` dans `src/data/grammarTopics.js`.
+- `id` dans `shared/grammarTopics.js`.
 
 C'est ce qui permet à `buildReviewQueue()` de remonter en tête de file un point
-de grammaire parce qu'il rate en dialogue. Introduire un tag qui n'existe pas
-dans `GRAMMAR_TOPICS` casse silencieusement ce lien : le tag est alors ignoré par
-la file de révision.
+de grammaire parce qu'il rate en dialogue. Un tag absent de `GRAMMAR_TOPICS`
+casse ce lien **en silence** : il s'affiche à l'écran mais n'est jamais converti
+en exercice.
+
+Les prompts du Worker injectent donc la liste fermée des tags via
+`tagsForPrompt()` plutôt que de donner des exemples — c'est précisément ce qui
+avait dérivé : deux des quatre tags cités en exemple dans le prompt de dialogue
+n'existaient pas. Ajouter un point de grammaire = une entrée dans
+`GRAMMAR_TOPICS`, et les deux prompts le connaissent aussitôt. Ne jamais écrire
+un tag en dur dans un prompt.
 
 ### Persistance : asynchrone exprès
 
@@ -78,9 +85,16 @@ livrée. `migrate()` retourne un état vierge plutôt que de planter, y compris 
 
 ### `shared/` est lu des deux côtés
 
-`shared/scenarios.js` est importé par le front (libellés d'écran) et par le
-Worker (construction du prompt). Source unique de vérité pour les 3 scénarios de
-dialogue. Ne pas dupliquer ces données dans `src/data/`.
+Deux modules y vivent, pour la même raison : le front et le Worker en ont besoin
+tous les deux, et les dupliquer ferait diverger le prompt de l'écran.
+
+- `shared/scenarios.js` — les 3 scénarios de dialogue (libellés d'écran côté
+  front, construction du prompt côté Worker) ;
+- `shared/grammarTopics.js` — le catalogue de grammaire, la file de révision, et
+  la liste fermée de tags injectée dans les prompts.
+
+Ne pas dupliquer ces données dans `src/data/`, qui ne garde que ce dont le
+Worker n'a aucun usage (`vocabulary.js`).
 
 ### Navigation
 

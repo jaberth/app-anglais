@@ -1,5 +1,5 @@
 import { Button, Card, CardTitle } from '../../components/Card.jsx'
-import { GRAMMAR_TOPICS, buildReviewQueue, getGrammarTopic } from '../../data/grammarTopics.js'
+import { GRAMMAR_TOPICS, buildReviewQueue, getGrammarTopic } from '../../../shared/grammarTopics.js'
 import { SCENARIOS } from '../../../shared/scenarios.js'
 
 // Tableau de bord : point d'entree de chaque session. Il repond a une seule

@@ -1,9 +1,15 @@
-// Catalogue des points de grammaire travailles par le module de revision.
+// Catalogue des points de grammaire, lu des DEUX cotes.
 //
-// Les `id` servent de cle commune a tout l'app : ils sont utilises comme
-// `topicTag` par le test de placement et comme `errorTag` par le feedback des
-// dialogues. C'est ce qui permet de dire "cette erreur revient en dialogue,
-// donc on remonte ce point dans la file de revision".
+// Il vit dans shared/ et non dans src/data/ parce que le Worker en a besoin :
+// c'est en injectant cette liste dans les prompts qu'on empeche le modele
+// d'inventer des tags. Un tag invente s'affiche dans l'UI mais n'est jamais
+// repris par buildReviewQueue() — la lacune est montree a l'utilisatrice sans
+// jamais lui etre proposee en exercice.
+//
+// Les `id` servent de cle commune a toute l'app : `topicTag` sur les items du
+// test de placement et ses weakPoints, `errorTag` sur les corrections du
+// module dialogue. Renommer un id casse ce lien pour les progressions deja
+// enregistrees ; ajouter une entree est en revanche sans risque.
 //
 // `order` = progression pedagogique par defaut, du plus structurant au plus fin.
 
@@ -80,8 +86,39 @@ export const GRAMMAR_TOPICS = [
   },
 ]
 
+/**
+ * Tags legitimes qui ne designent pas un point de grammaire : ils qualifient un
+ * item ou une lacune sans avoir d'exercice correspondant. Ils sont acceptes
+ * partout, mais ne remontent jamais dans la file de revision — c'est normal, il
+ * n'y a rien a reviser sous ce nom.
+ */
+export const NON_GRAMMAR_TAGS = ['comprehension', 'vocabulary', 'writing', 'general']
+
+const GRAMMAR_IDS = GRAMMAR_TOPICS.map((topic) => topic.id)
+
+/** Tous les tags que l'app sait interpreter. */
+export const KNOWN_TAGS = [...GRAMMAR_IDS, ...NON_GRAMMAR_TAGS]
+
+export function isKnownTag(tag) {
+  return KNOWN_TAGS.includes(tag)
+}
+
 export function getGrammarTopic(id) {
   return GRAMMAR_TOPICS.find((topic) => topic.id === id) || null
+}
+
+/**
+ * Liste des tags a injecter dans les prompts du Worker.
+ *
+ * On ne donne que les identifiants, pas les libelles : ceux-ci sont en francais
+ * et destines a l'ecran, alors que les prompts sont en anglais. Les ids sont
+ * assez explicites pour que le modele choisisse correctement.
+ */
+export function tagsForPrompt() {
+  return {
+    grammar: GRAMMAR_IDS.join(', '),
+    other: NON_GRAMMAR_TAGS.join(', '),
+  }
 }
 
 /**

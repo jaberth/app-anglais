@@ -5,7 +5,7 @@
 // ce qu'elle croit deja et ferait rater l'objectif du test.
 
 import { Button, Card, CardTitle } from '../../components/Card.jsx'
-import { getGrammarTopic } from '../../data/grammarTopics.js'
+import { getGrammarTopic } from '../../../shared/grammarTopics.js'
 
 export default function ResultScreen({ result, onNavigate }) {
   return (

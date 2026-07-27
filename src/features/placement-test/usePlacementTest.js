@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { evaluatePlacementTest, generatePlacementTest } from '../../lib/api/coachClient.js'
-import { buildReviewQueue, getGrammarTopic } from '../../data/grammarTopics.js'
+import { buildReviewQueue, isKnownTag } from '../../../shared/grammarTopics.js'
 
 const ITEM_COUNT = 18
 
@@ -223,14 +223,11 @@ export function usePlacementTest({ progress, updateProgress }) {
   }
 }
 
-// Tags legitimes qui ne sont pas des points de grammaire : le prompt du test les
-// autorise explicitement, ils n'ont donc pas a declencher d'alerte.
-const NON_GRAMMAR_TAGS = new Set(['comprehension', 'general', 'vocabulary', 'writing'])
-
 /**
- * Un topicTag absent de GRAMMAR_TOPICS est ignore par buildReviewQueue() : le
- * point faible s'affiche dans la restitution mais ne remonte jamais dans la file
- * de revision. C'est le piege documente dans CLAUDE.md.
+ * Filet de securite. Le prompt d'evaluation impose desormais la liste fermee des
+ * tags (voir shared/grammarTopics.js), mais rien ne garantit que le modele s'y
+ * tienne : un tag hors liste s'afficherait dans la restitution sans jamais
+ * remonter dans la file de revision. On veut l'entendre si ca arrive.
  *
  * Volontairement PAS conditionne a import.meta.env.DEV : `npm run dev:worker`,
  * seul mode ou /api/* repond, sert le build de production. Une alerte reservee
@@ -238,13 +235,11 @@ const NON_GRAMMAR_TAGS = new Set(['comprehension', 'general', 'vocabulary', 'wri
  * (console uniquement, jamais visible dans l'UI).
  */
 function warnUnknownTags(weakPoints) {
-  const unknown = weakPoints
-    .map((point) => point.topicTag)
-    .filter((tag) => tag && !NON_GRAMMAR_TAGS.has(tag) && !getGrammarTopic(tag))
+  const unknown = weakPoints.map((point) => point.topicTag).filter((tag) => tag && !isKnownTag(tag))
 
   if (unknown.length > 0) {
     console.warn(
-      `[placement] topicTag inconnu de GRAMMAR_TOPICS, ignore par la file de revision : ${unknown.join(', ')}`,
+      `[placement] topicTag hors catalogue, ignore par la file de revision : ${unknown.join(', ')}`,
     )
   }
 }

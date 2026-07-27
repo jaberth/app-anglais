@@ -1,5 +1,5 @@
 import { Card, CardTitle, ComingSoon } from '../../components/Card.jsx'
-import { buildReviewQueue, getGrammarTopic } from '../../data/grammarTopics.js'
+import { buildReviewQueue, getGrammarTopic } from '../../../shared/grammarTopics.js'
 
 // TODO(V1) - Module de revision grammaticale
 //

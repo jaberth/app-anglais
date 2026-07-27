@@ -29,7 +29,7 @@ export function createInitialState() {
     profile: {
       level: null, // 'A2' | 'B1' | 'B2' | null tant que le test n'est pas passe
       assessedAt: null,
-      weakPoints: [], // ex: ['past-simple-vs-present-perfect', 'prepositions']
+      weakPoints: [], // ex: ['present-perfect-vs-past-simple', 'prepositions']
     },
 
     // Historique des tests, pour tracer la progression dans le temps.
@@ -40,7 +40,7 @@ export function createInitialState() {
 
     // Suivi grammatical : ce qui est acquis vs a retravailler en priorite.
     grammar: {
-      mastered: [], // ids de topics (voir src/data/grammarTopics.js)
+      mastered: [], // ids de topics (voir shared/grammarTopics.js)
       toReview: [], // ids ordonnes par priorite, alimentes par le test
       stats: {}, // topicId -> { attempts, correct, lastSeenAt }
     },
