@@ -16,6 +16,7 @@ import {
   parsePlacementEvaluationResponse,
 } from './prompts/placementTest.js'
 import { buildScenarioRequest, parseScenarioResponse } from './prompts/scenarioBuilder.js'
+import { buildTranscribeRequest, parseTranscribeResponse } from './prompts/transcribe.js'
 
 // Modele epingle explicitement, jamais un alias type `gemini-flash-latest` : le
 // Worker depend d'un format JSON strict, un changement de modele silencieux le
@@ -53,6 +54,10 @@ const ROUTES = {
   '/api/scenario': {
     build: buildScenarioRequest,
     parse: parseScenarioResponse,
+  },
+  '/api/transcribe': {
+    build: buildTranscribeRequest,
+    parse: parseTranscribeResponse,
   },
 }
 

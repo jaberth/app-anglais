@@ -10,6 +10,7 @@ import { SCENARIOS } from '../../../shared/scenarios.js'
 import { getGrammarTopic } from '../../../shared/grammarTopics.js'
 import ConversationScreen from './ConversationScreen.jsx'
 import ScenarioBuilder from './ScenarioBuilder.jsx'
+import VoiceScreen from './VoiceScreen.jsx'
 import { useDialogue } from './useDialogue.js'
 
 // Au-dela, la liste de choix devient une corvee de tri plutot qu'un raccourci.
@@ -130,12 +131,33 @@ function ChoixScenario({ scenario, onSelect, onDelete }) {
 
 function DialogueSession({ scenario, progress, updateProgress, onQuit, onNavigate }) {
   const dialogue = useDialogue({ scenario, progress, updateProgress })
+  // On demarre a l'ecrit : c'est le mode qui leve le blocage. La voix se prend
+  // quand elle se sent prete, pas par defaut.
+  const [mode, setMode] = useState('text')
 
   if (dialogue.finished) {
     return <BilanSession scenario={scenario} turns={dialogue.turns} onNavigate={onNavigate} />
   }
 
-  return <ConversationScreen scenario={scenario} dialogue={dialogue} onQuit={onQuit} />
+  if (mode === 'voice') {
+    return (
+      <VoiceScreen
+        scenario={scenario}
+        dialogue={dialogue}
+        onQuit={onQuit}
+        onSwitchToText={() => setMode('text')}
+      />
+    )
+  }
+
+  return (
+    <ConversationScreen
+      scenario={scenario}
+      dialogue={dialogue}
+      onQuit={onQuit}
+      onSwitchToVoice={() => setMode('voice')}
+    />
+  )
 }
 
 function BilanSession({ scenario, turns, onNavigate }) {

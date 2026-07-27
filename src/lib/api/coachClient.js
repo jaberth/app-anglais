@@ -127,6 +127,29 @@ export function buildScenario({ description, refinements }, options) {
 }
 
 /**
+ * Transcrit un enregistrement audio. Chemin de repli du mode conversation,
+ * utilise uniquement quand la reconnaissance du navigateur fait defaut.
+ */
+export async function transcribeAudio({ blob }, options) {
+  const audioBase64 = await blobToBase64(blob)
+  return postJSON('/transcribe', { audioBase64, mimeType: blob.type }, options)
+}
+
+/**
+ * FileReader plutot que btoa(String.fromCharCode(...)) : sur un enregistrement
+ * d'une minute, l'etalement de l'octet-tableau en arguments depasse la taille
+ * de pile autorisee et leve un RangeError.
+ */
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '')
+    reader.onerror = () => reject(new Error('Lecture audio impossible'))
+    reader.readAsDataURL(blob)
+  })
+}
+
+/**
  * Genere une serie d'exercices ciblee sur un point de grammaire.
  * `examples` = les formulations fautives qu'elle a reellement produites en
  * dialogue sur ce point, quand il y en a.

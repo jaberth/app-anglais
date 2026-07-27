@@ -11,7 +11,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Card, CardTitle } from '../../components/Card.jsx'
 
-export default function ConversationScreen({ scenario, dialogue, onQuit }) {
+export default function ConversationScreen({ scenario, dialogue, onQuit, onSwitchToVoice }) {
   const { turns, pending, echangesCount, send, retry, finish } = dialogue
   const [draft, setDraft] = useState('')
   const finRef = useRef(null)
@@ -96,8 +96,29 @@ export default function ConversationScreen({ scenario, dialogue, onQuit }) {
             </Button>
           )}
         </div>
+
+        {onSwitchToVoice && (
+          <button
+            type="button"
+            onClick={onSwitchToVoice}
+            className="mt-3 flex w-full items-center justify-center gap-2 text-sm font-medium text-brand-700 hover:text-brand-600"
+          >
+            <MicroIcon className="size-4" />
+            Passer à l’oral
+          </button>
+        )}
       </Card>
     </div>
+  )
+}
+
+function MicroIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <rect x="9" y="2.5" width="6" height="12" rx="3" fill="currentColor" stroke="none" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0" strokeLinecap="round" />
+      <path d="M12 17.5V21" strokeLinecap="round" />
+    </svg>
   )
 }
 
