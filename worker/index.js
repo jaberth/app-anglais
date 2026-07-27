@@ -14,7 +14,14 @@ import {
   parsePlacementEvaluationResponse,
 } from './prompts/placementTest.js'
 
-const GEMINI_MODEL = 'gemini-2.5-flash'
+// Modele epingle explicitement, jamais un alias type `gemini-flash-latest` : le
+// Worker depend d'un format JSON strict, un changement de modele silencieux le
+// casserait sans que rien ne le signale.
+//
+// gemini-2.5-flash n'est plus servi aux projets Google Cloud crees recemment
+// (404 "no longer available to new users"), alors qu'il apparait encore dans le
+// listing des modeles. Ne pas y revenir.
+const GEMINI_MODEL = 'gemini-3.6-flash'
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
 
 // Meme origine uniquement : le front est servi par ce meme Worker, donc aucune
@@ -117,8 +124,10 @@ async function callGemini(env, { systemPrompt, contents, generationConfig }) {
         },
       }),
     })
-  } catch {
-    // Ne jamais faire fuiter la cle ou le detail reseau dans le message.
+  } catch (error) {
+    // Le detail va dans les logs du Worker (wrangler tail), jamais dans la
+    // reponse : le client n'a pas a savoir comment on parle a Gemini.
+    console.error('[gemini] echec reseau', error?.message)
     return { ok: false, error: "Erreur reseau lors de l'appel a l'API Gemini", status: 502 }
   }
 
@@ -126,6 +135,10 @@ async function callGemini(env, { systemPrompt, contents, generationConfig }) {
   const rawBody = await response.text()
 
   if (!response.ok) {
+    // Idem : seul le log serveur porte le detail renvoye par Gemini. Ce corps
+    // ne contient jamais la cle, uniquement le motif du refus.
+    console.error(`[gemini] HTTP ${response.status} ${rawBody.slice(0, 400)}`)
+
     // 429 = quota atteint : on le transmet tel quel pour que l'UI affiche un
     // message specifique plutot qu'une erreur generique.
     return {

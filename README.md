@@ -15,7 +15,7 @@ pratique vocale est explicitement reportée en V2.
 | Front       | React 19 + Vite 8 + Tailwind CSS 4                                    |
 | PWA         | `vite-plugin-pwa` (manifest + service worker, `autoUpdate`)           |
 | Backend     | Cloudflare Workers (Static Assets + proxy `/api/*`)                   |
-| IA          | Gemini API (`gemini-2.5-flash`), appelée **uniquement** par le Worker |
+| IA          | Gemini API (`gemini-3.6-flash`), appelée **uniquement** par le Worker |
 | Persistance | LocalStorage (schéma versionné, migration-ready vers KV)              |
 | Auth        | Aucune côté app — voir Cloudflare Access ci-dessous                   |
 
@@ -42,7 +42,7 @@ src/
   components/           Primitives UI partagées (AppShell, Card, Button)
   features/
     dashboard/          Tableau de bord : session du jour, historique, niveau
-    placement-test/     Test de placement (à implémenter)
+    placement-test/     Test de placement : intro, passage, restitution
     dialogue/           Dialogues scénarisés + feedback correctif
     grammar/            File de révision priorisée par les lacunes
     vocabulary/         Banque de vocabulaire métier
@@ -111,7 +111,6 @@ alerte de facturation côté Google Cloud dès la création de la clé Gemini.
 Les écrans marqués `ComingSoon` dans l'UI portent chacun un bloc `TODO(V1)` en
 tête de fichier détaillant le travail restant :
 
-- `features/placement-test/` — génération, passage et restitution du test
 - `features/dialogue/` — fil de conversation et affichage du feedback
 - `features/grammar/` — séries d'exercices (nécessite une route `/api/grammar`)
 - `features/vocabulary/` — mode révision par cartes

@@ -65,8 +65,9 @@ Cloudflare KV (prévue si le multi-appareils devient nécessaire) ne touche que 
 `backend` en bas de ce fichier.
 
 Toute la progression tient dans **un seul objet sérialisable**, versionné par
-`SCHEMA_VERSION` dans `schema.js`. Faire évoluer le schéma = ajouter une entrée à
-`MIGRATIONS` et incrémenter la version. Ne jamais modifier une migration déjà
+`SCHEMA_VERSION` dans `schema.js` (v2 depuis l'arrivée de `placementDraft`, le
+brouillon qui rend un test de placement interrompu reprenable). Faire évoluer le
+schéma = ajouter une entrée à `MIGRATIONS` et incrémenter la version. Ne jamais modifier une migration déjà
 livrée. `migrate()` retourne un état vierge plutôt que de planter, y compris face
 à un état venu d'une version plus récente.
 
@@ -84,8 +85,12 @@ pas introduire de dépendance de routage sans besoin réel d'URL partageables.
 
 ## État d'implémentation
 
-Le scaffold est navigable mais les écrans marqués `ComingSoon` ne sont pas
-implémentés : test de placement, fil de conversation du dialogue, exercices de
+Le **test de placement est implémenté** (`features/placement-test/`) : intro,
+passage item par item, évaluation, restitution, et écriture du profil + de la
+file de révision. Il est la seule source de `profile.level` et
+`profile.weakPoints`.
+
+Restent marqués `ComingSoon` : fil de conversation du dialogue, exercices de
 grammaire, mode révision du vocabulaire. Chaque fichier concerné porte un bloc
 `TODO(V1)` en tête décrivant le travail restant et les fonctions déjà en place.
 

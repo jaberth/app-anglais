@@ -11,14 +11,20 @@ run_worker_first = ["/api/*"]
 
 # La cle Gemini vit dans le Secrets Store Cloudflare, jamais dans le repo ni
 # dans le bundle client.
-# A creer avant le premier deploiement :
-#   npx wrangler secrets-store store create coach-anglais
-#   npx wrangler secrets-store secret create <STORE_ID> --name GEMINI_API_KEY --scopes workers
-# puis renseigner store_id ci-dessous.
-# [[secrets_store_secrets]]
-# binding = "GEMINI_API_KEY"
-# store_id = "<A_RENSEIGNER>"
-# secret_name = "GEMINI_API_KEY"
+#
+# Le store est partage avec Golf Tracker : un Secrets Store est un coffre au
+# niveau du COMPTE, pas du Worker. Seul le nom du secret change, pour que chaque
+# app ait sa propre cle Gemini — donc son propre quota et sa propre revocation.
+#
+# A creer avant utilisation, DEUX fois (wrangler 4 agit en local par defaut) :
+#   npx wrangler secrets-store secret create 672323dbb30e4e80a1ff5c7226e05f22 \
+#     --name GEMINI_API_KEY_ANGLAIS --scopes workers --remote   # pour deploy
+#   npx wrangler secrets-store secret create 672323dbb30e4e80a1ff5c7226e05f22 \
+#     --name GEMINI_API_KEY_ANGLAIS --scopes workers            # pour dev:worker
+[[secrets_store_secrets]]
+binding = "GEMINI_API_KEY"
+store_id = "672323dbb30e4e80a1ff5c7226e05f22"
+secret_name = "GEMINI_API_KEY_ANGLAIS"
 
 # Migration V2 : quand LocalStorage ne suffira plus (multi-appareils), creer un
 # namespace KV et brancher le backend de src/lib/storage/progressStore.js dessus.

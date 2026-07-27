@@ -5,7 +5,7 @@
 // dans Golf Tracker). Aucun composant ne doit ecrire dans localStorage
 // directement : tout passe par progressStore.js.
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 export const STORAGE_KEY = 'coach-anglais:progress'
 
@@ -53,6 +53,12 @@ export function createInitialState() {
     // Erreurs recurrentes detectees par le feedback correctif, toutes sources
     // confondues : c'est la matiere premiere du module grammaire.
     recurringErrors: {}, // errorTag -> { count, lastSeenAt, examples[] }
+
+    // Test de placement en cours, s'il y en a un. Le brief impose de pouvoir
+    // reprendre un test interrompu : les items generes coutent un appel Gemini
+    // et le test dure 10 minutes, le refaire de zero serait doublement punitif.
+    // Remis a null des que le test est evalue ou abandonne explicitement.
+    placementDraft: null, // { id, startedAt, index, items[], answers{} }
   }
 }
 
@@ -62,7 +68,8 @@ export function createInitialState() {
  * incrementer SCHEMA_VERSION. Ne jamais modifier une migration deja livree.
  */
 const MIGRATIONS = {
-  // 1: (state) => ({ ...state, schemaVersion: 2, nouveauChamp: ... }),
+  // v1 -> v2 : arrivee du test de placement reprenable.
+  1: (state) => ({ ...state, schemaVersion: 2, placementDraft: null }),
 }
 
 /**
