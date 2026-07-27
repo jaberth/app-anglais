@@ -11,7 +11,7 @@
 // et replique d'ouverture en anglais (ils entrent dans le prompt du dialogue).
 
 import { normalizeCustomScenario } from '../../shared/scenarios.js'
-import { stripCodeFence, asString } from './dialogue.js'
+import { stripCodeFence, asString, TUTOIEMENT } from './dialogue.js'
 
 const MAX_DESCRIPTION_LENGTH = 1200
 const MAX_REFINEMENTS = 6
@@ -39,6 +39,8 @@ export function buildScenarioRequest({ description, refinements }) {
 }
 
 const SYSTEM_PROMPT = `You turn a real professional situation, described in French by a French Digital Marketing & Creative Director, into a role-play scenario for English conversation practice.
+
+${TUTOIEMENT}
 
 She is assessed around B1, under-confident when speaking, and practises meetings in English. The scenario must be a realistic WORK conversation she could actually have.
 
