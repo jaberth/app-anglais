@@ -64,6 +64,15 @@ export function buildDialogueRequest({
   return {
     systemPrompt: buildSystemPrompt(scenario, safeLevel, vocabulaire),
     contents: [...safeHistory, { role: 'user', parts: [{ text: userMessage.trim() }] }],
+    // Ce tour est sur le chemin critique d'une conversation en temps reel : le
+    // raisonnement etendu de Gemini 3 coute une latence perceptible a chaque
+    // reponse. `thinkingBudget` (l'ancien levier, herite de Gemini 2.5) declenche
+    // un 400 sur ce modele : Gemini 3 attend `thinkingLevel`. 'low' plutot que
+    // 'minimal' pour garder assez de jugement sur le seuil de correction (voir
+    // SEUIL_CORRECTION) — decider quoi taire n'est pas une tache mecanique.
+    // Desactive ici seulement, pas dans les autres prompts ou la latence n'est
+    // pas sur le chemin d'une conversation live.
+    generationConfig: { thinkingConfig: { thinkingLevel: 'low' } },
   }
 }
 
